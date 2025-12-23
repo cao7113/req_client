@@ -1,4 +1,7 @@
 # ReqClient
+[![CI](https://github.com/cao7113/req_client/actions/workflows/ci.yml/badge.svg)](https://github.com/cao7113/req_client/actions/workflows/ci.yml)
+[![Release](https://github.com/cao7113/req_client/actions/workflows/release.yml/badge.svg)](https://github.com/cao7113/req_client/actions/workflows/release.yml)
+[![Hex](https://img.shields.io/hexpm/v/req_client)](https://hex.pm/packages/req_client)
 
 Request client based on `req` & `mint` & `mint_websocket` etc. packages.
 
