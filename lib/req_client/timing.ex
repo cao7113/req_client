@@ -38,7 +38,8 @@ defmodule ReqClient.Timing do
           Logger.info("Req taken time: #{diff_ms}ms")
         end
 
-        Req.Response.put_header(resp, "X-Req-Duration-MS", diff_ms |> to_string())
+        # Req.Response.put_header(resp, "X-Req-Client-Duration-MS", diff_ms |> to_string())
+        Req.Response.put_private(resp, :req_client_duration, diff_ms)
       else
         resp
       end

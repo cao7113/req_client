@@ -7,6 +7,10 @@ Request client based on `req` & `mint` & `mint_websocket` etc. packages.
 
 Custom steps can be packaged into plugins so that they are even easier to use by others???
 
+## Todo
+
+[] remove cli to script?
+
 ## Usage
 
 ```
