@@ -1,0 +1,15 @@
+# https://taskfile.dev/docs/guide
+# https://taskfile.dev/reference/templating/
+version: '3'
+tasks:
+  default: mix test
+  sh: iex --erl "-kernel shell_history enabled" -S mix
+  fmt: mix format
+
+  setup: |
+    mix deps.get
+
+  ## Git ops
+  ops.up: mix git_ops.release --yes && git push --follow-tags
+  prj.info: mix git_ops.project_info
+  ops.init: mix git_ops.release --initial

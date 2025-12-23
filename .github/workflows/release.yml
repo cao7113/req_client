@@ -1,0 +1,43 @@
+name: Release
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  check-ci:
+    name: Check CI
+    uses: ./.github/workflows/ci.yml
+
+  # https://hex.pm/docs/publish#publishing-from-ci
+  publish-hex:
+    name: Publish to hex.pm
+    runs-on: ubuntu-latest
+    needs: check-ci
+    concurrency: deploy-group
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          version-file: .tool-versions
+          version-type: strict
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: deps
+          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Publish hex package
+        run: |
+          # mix escript.build
+          mix hex.publish --yes --replace
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
