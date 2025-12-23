@@ -1,6 +1,9 @@
 # https://taskfile.dev/docs/guide
 # https://taskfile.dev/reference/templating/
 version: '3'
+vars:
+  CLI_PATH: req_client
+  
 tasks:
   default: mix test
   sh: iex --erl "-kernel shell_history enabled" -S mix
@@ -8,6 +11,18 @@ tasks:
 
   setup: |
     mix deps.get
+
+  build:
+    aliases: ["b"] 
+    cmds:
+    - mix escript.build --force
+
+  install:
+    aliases: ["i"]
+    cmds:
+    - mix escript.install {{.CLI_PATH}} --force
+  hex.i: mix escript.install hex req_client --force
+  gi: mix escript.install github cao7113/req_client --force
 
   ## Git ops
   ops.up: mix git_ops.release --yes && git push --follow-tags

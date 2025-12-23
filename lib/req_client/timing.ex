@@ -47,7 +47,7 @@ defmodule ReqClient.Timing do
   end
 
   def timing?(req) do
-    Req.Request.get_option(req, :timing, true)
+    Req.Request.get_option(req, :timing, false)
   end
 
   def get_duration(begin_at, unit \\ :microsecond, begin_unit \\ :native) do
