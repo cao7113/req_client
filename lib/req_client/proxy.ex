@@ -17,7 +17,7 @@ defmodule ReqClient.Proxy do
     req
     |> Req.Request.register_options([:proxy, :verbose])
     |> Req.merge(opts)
-    |> Req.Request.append_request_steps(env_proxy: &add_env_proxy/1)
+    |> Req.Request.append_request_steps(add_env_proxy: &add_env_proxy/1)
   end
 
   @doc """

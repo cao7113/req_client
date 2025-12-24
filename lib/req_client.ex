@@ -53,12 +53,12 @@ defmodule ReqClient do
     |> Req.new()
     # NOTE: prepend in reversed order
     |> ReqClient.Proxy.attach()
-    |> ReqClient.Stub.attach()
+    |> ReqClient.Breaker.attach()
     |> ReqClient.TraceId.attach()
     |> ReqClient.Timing.attach()
     |> ReqClient.Inspect.attach()
     |> ReqClient.Verbose.attach()
-    |> ReqClient.Faker.attach()
+    |> ReqClient.Stub.attach()
     |> Req.merge(opts)
   end
 

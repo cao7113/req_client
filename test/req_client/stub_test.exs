@@ -5,10 +5,22 @@ defmodule ReqClient.StubTest do
   # @moduletag :try
 
   describe "stub plugin" do
-    test "with data" do
+    test "with data as response body" do
       resp = Rc.get!("http://test", stub: :ok)
       assert resp.status == 200
       assert resp.body == :ok
+    end
+
+    test "exception" do
+      # Req.TransportError.exception(reason: :timeout)
+      excep = %Req.TransportError{reason: :timeout}
+
+      assert Rc.get("http://test", stub: excep, retry: false) ==
+               {:error, %Req.TransportError{reason: :timeout}}
+
+      assert_raise Req.TransportError, "timeout", fn ->
+        Rc.get!("http://test", stub: excep, retry: false)
+      end
     end
 
     # run_finch is the default adapter to do the actual network request!

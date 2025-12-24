@@ -54,7 +54,7 @@ defmodule ReqClient.CLI do
     # req |> dbg
 
     headers = if opts[:headers], do: [:headers], else: []
-    req_timing = Req.Response.get_private(resp, :req_client_duration)
+    req_timing = ReqClient.Timing.get_timing_rtt(resp)
 
     resp =
       resp

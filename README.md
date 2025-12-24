@@ -20,8 +20,8 @@ ReqClient.get!("https://httpbin.org/get")
 # or as plugins
 Req.get!(ReqClient.new(), url: "https://httpbin.org/get")
 
-# faker or stub
-ReqClient.get!("https://unknown.host", fake: :ok, verbose: true)
+# break or stub
+ReqClient.get!("https://unknown.host", break: :ok, verbose: true)
 ReqClient.get!("https://unknown.host", stub: :ok, verbose: true)
 ```
 

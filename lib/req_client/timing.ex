@@ -38,8 +38,7 @@ defmodule ReqClient.Timing do
           Logger.info("Req taken time: #{diff_ms}ms")
         end
 
-        # Req.Response.put_header(resp, "X-Req-Client-Duration-MS", diff_ms |> to_string())
-        Req.Response.put_private(resp, :req_client_duration, diff_ms)
+        put_timing_rtt(resp, diff_ms)
       else
         resp
       end
@@ -49,6 +48,18 @@ defmodule ReqClient.Timing do
 
   def timing?(req) do
     Req.Request.get_option(req, :timing, false)
+  end
+
+  # rtt: round-trip-time
+  @rtt_key :req_client_rtt_duration
+
+  def put_timing_rtt(resp, diff_ms) do
+    Req.Response.put_header(resp, "X-Req-RTT-MS", diff_ms |> to_string())
+    Req.Response.put_private(resp, @rtt_key, diff_ms)
+  end
+
+  def get_timing_rtt(resp) do
+    Req.Response.get_private(resp, @rtt_key, 0)
   end
 
   def get_duration(begin_at, unit \\ :microsecond, begin_unit \\ :native) do
