@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.1.6](https://github.com/cao7113/req_client/compare/v0.1.5...v0.1.6) (2025-12-24)
+
+
+
+
+### Improvements:
+
+* better no-timing hint by Ryn Cao
+
 ## [v0.1.5](https://github.com/cao7113/req_client/compare/v0.1.4...v0.1.5) (2025-12-24)
 
 
