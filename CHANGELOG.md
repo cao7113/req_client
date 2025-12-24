@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.1.4](https://github.com/cao7113/req_client/compare/v0.1.3...v0.1.4) (2025-12-24)
+
+
+
+
+### Improvements:
+
+* maintain httpc here and refactor code org tree by Ryn Cao
+
+* stub and break plugin by Ryn Cao
+
 ## [v0.1.3](https://github.com/cao7113/req_client/compare/v0.1.2...v0.1.3) (2025-12-23)
 
 
