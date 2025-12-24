@@ -46,13 +46,14 @@ defmodule ReqClient.CLI do
 
     default_url = List.first(args) || "https://httpbin.org/get"
 
-    ropts =
+    client = ReqClient.new()
+
+    copts =
       opts
-      |> Keyword.take([:debug, :url, :timing, :redirect])
+      |> Keyword.take(ReqClient.get_option_list(client))
       |> Keyword.put_new(:url, default_url)
 
-    client = ReqClient.new()
-    {_req, resp} = Req.run!(client, ropts)
+    {_req, resp} = Req.run!(client, copts)
     # req |> dbg
 
     headers = if opts[:headers], do: [:headers], else: []

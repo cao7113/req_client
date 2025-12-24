@@ -59,7 +59,7 @@ defmodule ReqClient.Timing do
   end
 
   def get_timing_rtt(resp) do
-    Req.Response.get_private(resp, @rtt_key, 0)
+    Req.Response.get_private(resp, @rtt_key, :no_timing_option)
   end
 
   def get_duration(begin_at, unit \\ :microsecond, begin_unit \\ :native) do
