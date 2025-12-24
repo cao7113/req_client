@@ -1,4 +1,4 @@
-defmodule Minter.Ws do
+defmodule ReqClinet.MintWs do
   @moduledoc """
   Websocket client based on mint-websocket and mint
 

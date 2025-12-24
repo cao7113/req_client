@@ -1,6 +1,7 @@
-defmodule Minter do
+defmodule ReqClient.Mint do
   @moduledoc """
-  Minter is the http(1/2) connection owner process
+  http(1/2) connection owner process directly based on mint package
+
   - Can request many resources on the same client by req/5!
 
   ## Links
@@ -18,7 +19,7 @@ defmodule Minter do
   ## User API - request with client pid
 
   @doc """
-  iex> Minter.get("/", client: Minter.http2_client())
+  iex> ReqClient.Mint.get("/", client: ReqClient.Mint.http2_client())
   """
   def get(path, opts \\ []) do
     opts
@@ -89,7 +90,7 @@ defmodule Minter do
     log: true
   ]
   def http_client(opts \\ @default_http1_opts) do
-    {name, opts} = Keyword.pop(opts, :genserver_name, Minter.HTTP)
+    {name, opts} = Keyword.pop(opts, :genserver_name, ReqClient.Mint.HTTP)
 
     Process.whereis(name)
     |> case do
@@ -112,7 +113,7 @@ defmodule Minter do
       client_settings: [
         enable_push: true
       ],
-      genserver_name: Minter.HTTP2
+      genserver_name: ReqClient.Mint.HTTP2
     ]
     |> Keyword.merge(opts)
     |> http_client()

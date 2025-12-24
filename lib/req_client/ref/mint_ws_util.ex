@@ -1,4 +1,4 @@
-defmodule Minter.Ws.Util do
+defmodule ReqClient.MintWs.Util do
   @moduledoc """
   Ws utils
   """

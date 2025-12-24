@@ -11,13 +11,15 @@ defmodule ReqClient.CLI do
     debug: :boolean,
     url: :string,
     headers: :boolean,
-    timing: :boolean
+    timing: :boolean,
+    redirect: :boolean
   ]
   @aliases [
     h: :help,
     d: :debug,
     u: :url,
-    t: :timing
+    t: :timing,
+    r: :redirect
   ]
 
   @doc """
@@ -46,7 +48,7 @@ defmodule ReqClient.CLI do
 
     ropts =
       opts
-      |> Keyword.take([:debug, :url, :timing])
+      |> Keyword.take([:debug, :url, :timing, :redirect])
       |> Keyword.put_new(:url, default_url)
 
     client = ReqClient.new()
