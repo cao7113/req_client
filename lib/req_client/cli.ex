@@ -33,9 +33,10 @@ defmodule ReqClient.CLI do
         allow_nonexistent_atoms: true
       )
 
-    begin_at = System.monotonic_time()
+    default_url = List.first(args) || raise "require arg like: req_client https://httpbin.org/get"
 
-    # todo: 50+ms here takes too long if run one-off request
+    begin_at = System.monotonic_time()
+    # take ~50ms here, too long if run one-off request?
     {apps_timing, _} =
       :timer.tc(
         fn ->
@@ -43,8 +44,6 @@ defmodule ReqClient.CLI do
         end,
         :millisecond
       )
-
-    default_url = List.first(args) || "https://httpbin.org/get"
 
     client = ReqClient.new()
 

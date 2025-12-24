@@ -9,7 +9,7 @@ Custom steps can be packaged into plugins so that they are even easier to use by
 
 ## Todo
 
-[] remove cli to script?
+[] httpc adapter like run_finch??? make adapter optinal, direct mint/finch/httpc/etc...
 
 ## Usage
 
