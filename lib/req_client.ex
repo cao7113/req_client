@@ -63,6 +63,16 @@ defmodule ReqClient do
   end
 
   @doc """
+  Get req-client supported option list now
+  """
+  def get_option_list(%Req.Request{} = r \\ new([])) do
+    r
+    |> Map.get(:registered_options)
+    |> MapSet.to_list()
+    |> Enum.sort()
+  end
+
+  @doc """
   More options from https://hexdocs.pm/req/Req.html#new/1-options
   """
   def default_opts() do
