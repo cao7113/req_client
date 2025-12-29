@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.1.7](https://github.com/cao7113/req_client/compare/v0.1.6...v0.1.7) (2025-12-29)
+
+
+
+
+### Bug Fixes:
+
+* add wrapper step to support plugable adapter by kind and payload with special :stub option by Ryn Cao
+
 ## [v0.1.6](https://github.com/cao7113/req_client/compare/v0.1.5...v0.1.6) (2025-12-24)
 
 
