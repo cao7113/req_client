@@ -13,6 +13,7 @@ IEx.configure(auto_reload: true)
 ## App specific here
 alias ReqClient, as: Rc
 alias ReqClient, as: R
+alias ReqClient.Mint, as: M
 
 import_file_if_available(".iex.local.exs")
 

@@ -1,4 +1,4 @@
-defmodule ReqClient.Breaker do
+defmodule ReqClient.Plugin.Breaker do
   @moduledoc """
   Req break plugin as regular request-step but return {req, resp} if breaked
 
@@ -37,14 +37,14 @@ defmodule ReqClient.Breaker do
       %Req.Response{} = resp ->
         resp = Req.Response.put_private(resp, :req_client_break, true)
 
-        if verbose?(req) do
+        if ReqClient.verbose?(req) do
           Logger.info("Broken response: #{resp |> inspect}")
         end
 
         {req, resp}
 
       %{__exception__: true} = err ->
-        if verbose?(req) do
+        if ReqClient.verbose?(req) do
           Logger.info("Broken exception: #{err |> inspect}")
         end
 
@@ -54,6 +54,4 @@ defmodule ReqClient.Breaker do
         req
     end
   end
-
-  defdelegate verbose?(req), to: ReqClient.Verbose
 end

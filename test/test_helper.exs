@@ -1,1 +1,1 @@
-ExUnit.start(exclude: [:try])
+ExUnit.start(exclude: [:try, :external])

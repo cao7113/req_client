@@ -33,9 +33,10 @@ defmodule ReqClient.CLI do
         allow_nonexistent_atoms: true
       )
 
-    begin_at = System.monotonic_time()
+    default_url = List.first(args) || raise "require arg like: req_client https://httpbin.org/get"
 
-    # todo: 50+ms here takes too long if run one-off request
+    begin_at = System.monotonic_time()
+    # take ~50ms here, too long if run one-off request?
     {apps_timing, _} =
       :timer.tc(
         fn ->
@@ -43,8 +44,6 @@ defmodule ReqClient.CLI do
         end,
         :millisecond
       )
-
-    default_url = List.first(args) || "https://httpbin.org/get"
 
     client = ReqClient.new()
 
@@ -57,7 +56,7 @@ defmodule ReqClient.CLI do
     # req |> dbg
 
     headers = if opts[:headers], do: [:headers], else: []
-    req_timing = ReqClient.Timing.get_timing_rtt(resp)
+    req_timing = ReqClient.Plugin.Timing.get_timing_rtt(resp)
 
     resp =
       resp
@@ -65,7 +64,7 @@ defmodule ReqClient.CLI do
 
     resp |> dbg
 
-    duration = ReqClient.Timing.get_duration(begin_at, :millisecond)
+    duration = ReqClient.Plugin.Timing.get_duration(begin_at, :millisecond)
 
     IO.puts(
       "# Timing info: total: #{duration}, req: #{req_timing} apps-starting: #{apps_timing} ms"

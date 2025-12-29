@@ -8,6 +8,26 @@ defmodule ReqClient do
   iex> ReqClient.get!("https://api.github.com/repos/elixir-lang/elixir")
   """
 
+  @doc """
+  Quick get request
+
+  ## Example
+    iex> R.g
+    iex> R.g :l
+    iex> R.g verbose: true
+  """
+  def g(url \\ :default, opts \\ []) do
+    {url, opts} =
+      if is_list(url) do
+        {nil, url}
+      else
+        {url, opts}
+      end
+
+    url = url || opts[:url] || :default
+    get!(url, opts)
+  end
+
   [:get, :post, :delete, :head, :patch, :run]
   |> Enum.each(fn req_method ->
     @doc """
@@ -17,6 +37,8 @@ defmodule ReqClient do
       iex> ReqClient.#{req_method} "https://httpbin.org/#{req_method}"
     """
     def unquote(req_method)(url, opts \\ []) do
+      url = ReqClient.Utils.get_url(url)
+
       opts =
         opts
         |> Keyword.put_new(:url, url)
@@ -25,51 +47,50 @@ defmodule ReqClient do
       apply(Req, unquote(req_method), [opts])
     end
 
-    bang_method = "#{req_method}!" |> String.to_atom()
+    req_bang_method = "#{req_method}!" |> String.to_atom()
 
     @doc """
     #{req_method |> to_string |> String.capitalize()} request with direct response
     ## Example
-      iex> ReqClient.#{bang_method} "https://httpbin.org/#{req_method}"
+      iex> ReqClient.#{req_bang_method} "https://httpbin.org/#{req_method}"
     """
-    def unquote(bang_method)(url, opts \\ []) do
+    def unquote(req_bang_method)(url, opts \\ []) do
+      url = ReqClient.Utils.get_url(url)
+
       opts =
         opts
         |> Keyword.put_new(:url, url)
         |> new()
 
-      apply(Req, unquote(bang_method), [opts])
+      apply(Req, unquote(req_bang_method), [opts])
     end
   end)
 
-  @doc """
-  Build a new Req client
+  # NOTE: prepend in reversed order
+  @plugins [
+    ReqClient.Plugin.Timing,
+    ReqClient.Plugin.Proxy,
+    ReqClient.Plugin.Breaker,
+    ReqClient.Plugin.TraceId,
+    ReqClient.Plugin.Inspect,
+    # should be the last one
+    ReqClient.Plugin.Wrapper
+  ]
 
-  - deps/req/lib/req.ex
-  - https://hexdocs.pm/req/Req.html#new/1
+  @doc """
+  Build a new Req client request with custom plugins
   """
   def new(opts \\ []) do
-    default_opts()
-    |> Req.new()
-    # NOTE: prepend in reversed order
-    |> ReqClient.Proxy.attach()
-    |> ReqClient.Breaker.attach()
-    |> ReqClient.TraceId.attach()
-    |> ReqClient.Timing.attach()
-    |> ReqClient.Inspect.attach()
-    |> ReqClient.Verbose.attach()
-    |> ReqClient.Stub.attach()
-    |> Req.merge(opts)
-  end
+    r =
+      default_opts()
+      |> Keyword.put(:adapter, &ReqClient.Plugin.Wrapper.run_adapt/1)
+      |> Req.new()
 
-  @doc """
-  Get req-client supported option list now
-  """
-  def get_option_list(%Req.Request{} = r \\ new([])) do
-    r
-    |> Map.get(:registered_options)
-    |> MapSet.to_list()
-    |> Enum.sort()
+    @plugins
+    |> Enum.reduce(r, fn plugin, r ->
+      plugin.attach(r)
+    end)
+    |> Req.merge(opts)
   end
 
   @doc """
@@ -100,7 +121,8 @@ defmodule ReqClient do
     ]
   end
 
-  ## Utils
+  def verbose?(req), do: ReqClient.Plugin.Wrapper.verbose?(req)
+  def get_kind(req), do: ReqClient.Plugin.Wrapper.get_kind(req)
 
   def find_option(req, options \\ []) do
     options
@@ -109,34 +131,17 @@ defmodule ReqClient do
     end)
   end
 
-  def default_req_opts do
-    Req.default_options()
+  def has_option?(%{options: opts} = _req, option) do
+    Map.has_key?(opts, option)
   end
 
   @doc """
-  iex> url = "https://elixir-lang.org"
-  iex> Req.get!(url, cache: true)
-
-  $> ls -al ~/Library/Caches/req
+  Get req-client supported option list now
   """
-  def cache_dir, do: :filename.basedir(:user_cache, ~c"req")
-
-  ## finch
-
-  def finch_children(sup \\ Req.FinchSupervisor) do
-    # {DynamicSupervisor, strategy: :one_for_one, name: Req.FinchSupervisor},
-    # dynamic create pool when provided :connect_options: []
-    DynamicSupervisor.which_children(sup)
-  end
-
-  @doc """
-  protocols: [:http1]]
-
-  Req.Finch default pool not support proxy!!!
-  """
-  def default_finch_opts do
-    # Req default start Finch pool
-    # {Finch, name: Req.Finch, pools: %{default: Req.Finch.pool_options(%{})}}
-    Req.Finch.pool_options(%{})
+  def get_option_list(%Req.Request{} = r \\ new([])) do
+    r
+    |> Map.get(:registered_options)
+    |> MapSet.to_list()
+    |> Enum.sort()
   end
 end

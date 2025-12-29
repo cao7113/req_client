@@ -1,4 +1,4 @@
-defmodule ReqClient.Timing do
+defmodule ReqClient.Plugin.Timing do
   @moduledoc """
   Req timing plugin
 
@@ -34,7 +34,7 @@ defmodule ReqClient.Timing do
         duration = get_duration(begin_at, :microsecond)
         diff_ms = duration / 1000
 
-        if verbose?(req) do
+        if ReqClient.verbose?(req) do
           Logger.info("Req taken time: #{diff_ms}ms")
         end
 
@@ -51,11 +51,12 @@ defmodule ReqClient.Timing do
   end
 
   # rtt: round-trip-time
-  @rtt_key :req_client_rtt_duration
+  @rtt_key :req_client_rtt_ms
 
   def put_timing_rtt(resp, diff_ms) do
-    Req.Response.put_header(resp, "X-Req-RTT-MS", diff_ms |> to_string())
-    Req.Response.put_private(resp, @rtt_key, diff_ms)
+    resp
+    |> Req.Response.put_header("x-req-rtt-ms", diff_ms |> to_string())
+    |> Req.Response.put_private(@rtt_key, diff_ms)
   end
 
   def get_timing_rtt(resp) do
@@ -77,6 +78,4 @@ defmodule ReqClient.Timing do
   # def test_duration(unit \\ :microsecond) do
   #   measure(fn -> :timer.sleep(100) end, unit)
   # end
-
-  defdelegate verbose?(req), to: ReqClient.Verbose
 end

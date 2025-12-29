@@ -9,7 +9,10 @@ opts = [
   log: true
 ]
 
-{:ok, conn} = Mint.HTTP.connect(:http, "httpbin.org", 80, opts)
+# http://httpbin.org/get
+# {:ok, conn} = Mint.HTTP.connect(:http, "httpbin.org", 80, opts)
+# https://httpbin.org/get
+{:ok, conn} = Mint.HTTP.connect(:https, "httpbin.org", 443, opts)
 {:ok, conn, _request_ref} = Mint.HTTP.request(conn, "GET", "/get", [], nil)
 
 receive do

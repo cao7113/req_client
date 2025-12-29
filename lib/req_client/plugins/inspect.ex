@@ -1,4 +1,4 @@
-defmodule ReqClient.Inspect do
+defmodule ReqClient.Plugin.Inspect do
   @moduledoc """
   Req inspect plugin
   """
@@ -18,9 +18,9 @@ defmodule ReqClient.Inspect do
   end
 
   def inspect_resp({req, resp}) do
-    enabled = verbose?(req) && enable_inspect(req, :resp)
+    enabled = ReqClient.verbose?(req) && enable_inspect(req, :resp)
 
-    if verbose?(req) && enabled do
+    if ReqClient.verbose?(req) && enabled do
       %{status: status, body: body} = resp
       Logger.info("Req.Response: [status: #{status}] #{body |> inspect} ")
     end
@@ -29,15 +29,16 @@ defmodule ReqClient.Inspect do
   end
 
   def inspect_request(req) do
-    enabled = verbose?(req) && enable_inspect(req, :request)
+    enabled = ReqClient.verbose?(req) && enable_inspect(req, :request)
 
-    if verbose?(req) && enabled do
+    if ReqClient.verbose?(req) && enabled do
       %{method: method, url: url, body: body, headers: _headers} =
         req
         |> Map.update!(:url, &URI.to_string/1)
 
       method_str = method |> to_string() |> String.upcase()
       Logger.info("#{method_str} #{url}")
+      Logger.debug("req options: #{req.options |> inspect()}")
 
       req_body =
         cond do
@@ -55,7 +56,7 @@ defmodule ReqClient.Inspect do
         end
 
       if req_body do
-        # use ReqCurl plugin
+        # todo use ReqCurl plugin
         Logger.info(
           "\ncurl -H \"Content-Type: application/json\" -X #{method_str} --data '#{req_body}'  #{url} | jq",
           tracing_id: nil
@@ -68,13 +69,15 @@ defmodule ReqClient.Inspect do
 
   def enable_inspect(req, slot \\ :request) do
     inspect_items(req)
-    |> List.wrap()
     |> Enum.member?(slot)
   end
 
   def inspect_items(req) do
     Req.Request.get_option(req, :inspect, [:request])
+    |> case do
+      :all -> [:request, :response]
+      o when is_list(o) -> o
+      o -> [o]
+    end
   end
-
-  defdelegate verbose?(req), to: ReqClient.Verbose
 end

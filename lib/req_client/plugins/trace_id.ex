@@ -1,4 +1,4 @@
-defmodule ReqClient.TraceId do
+defmodule ReqClient.Plugin.TraceId do
   @moduledoc """
   Req trace-id plugin
   """
@@ -9,7 +9,7 @@ defmodule ReqClient.TraceId do
     req
     |> Req.Request.register_options([:trace, :verbose])
     |> Req.merge(opts)
-    |> Req.Request.prepend_request_steps(add_trace_id: &add_tracing_id/1)
+    |> Req.Request.append_request_steps(add_trace_id: &add_tracing_id/1)
   end
 
   @doc """
@@ -19,7 +19,7 @@ defmodule ReqClient.TraceId do
     if tracing?(req) do
       tid = gen_unique_id()
 
-      if verbose?(req) do
+      if ReqClient.verbose?(req) do
         Logger.metadata(tracing_id: tid)
       end
 
@@ -50,6 +50,4 @@ defmodule ReqClient.TraceId do
 
     Base.url_encode64(binary)
   end
-
-  defdelegate verbose?(req), to: ReqClient.Verbose
 end

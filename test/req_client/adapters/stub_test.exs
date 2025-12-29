@@ -1,4 +1,4 @@
-defmodule ReqClient.StubTest do
+defmodule ReqClient.Adapter.StubTest do
   use ExUnit.Case
   alias ReqClient, as: Rc
 

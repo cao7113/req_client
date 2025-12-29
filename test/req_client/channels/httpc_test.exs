@@ -2,6 +2,8 @@ defmodule ReqClient.HttpcTest do
   use ExUnit.Case
   alias ReqClient.Httpc
 
+  @moduletag :external
+
   test "get_resp_content_type/1 returns expected content-type" do
     headers = [
       {~c"cache-control", ~c"max-age=0, private, must-revalidate"},
