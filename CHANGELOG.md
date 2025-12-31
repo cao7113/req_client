@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.1.8](https://github.com/cao7113/req_client/compare/v0.1.7...v0.1.8) (2025-12-31)
+
+
+
+
+### Bug Fixes:
+
+* mint adapter in passive mode by Ryn Cao
+
 ## [v0.1.7](https://github.com/cao7113/req_client/compare/v0.1.6...v0.1.7) (2025-12-29)
 
 
