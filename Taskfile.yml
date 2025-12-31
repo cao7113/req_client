@@ -18,6 +18,7 @@ tasks:
 
   install:
     aliases: ["i"]
+    deps: ["build"]
     cmds:
     - mix escript.install {{.CLI_PATH}} --force
   hex.i: mix escript.install hex req_client --force

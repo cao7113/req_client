@@ -33,7 +33,33 @@ defmodule ReqClient.CLI do
         allow_nonexistent_atoms: true
       )
 
-    default_url = List.first(args) || raise "require arg like: req_client https://httpbin.org/get"
+    url = List.first(args) || opts[:url]
+
+    unless url do
+      IO.puts("""
+      Help:
+
+      require a url, like below:
+
+      req_client https://httpbin.org/get
+      req_client -u https://httpbin.org/get
+      req_client x
+      """)
+
+      exit(:shutdown)
+    end
+
+    urls = ReqClient.BaseUtils.shortcut_urls()
+    shorts = urls |> Keyword.keys() |> Enum.map(&to_string/1)
+
+    url =
+      if url in shorts do
+        urls[url |> String.to_atom()]
+      else
+        url
+      end
+
+    IO.puts("# Fetching url: #{url}")
 
     begin_at = System.monotonic_time()
     # take ~50ms here, too long if run one-off request?
@@ -50,7 +76,7 @@ defmodule ReqClient.CLI do
     copts =
       opts
       |> Keyword.take(ReqClient.get_option_list(client))
-      |> Keyword.put_new(:url, default_url)
+      |> Keyword.put_new(:url, url)
 
     {_req, resp} = Req.run!(client, copts)
     # req |> dbg

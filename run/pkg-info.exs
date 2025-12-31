@@ -6,9 +6,7 @@ Mix.install([
 
 alias ReqClient, as: Rc
 
-default_url = "https://google.com"
-# default_url = "https://x.com"
-# default_url = "https://hex.pm"
+default_url = "https://hex.pm/api/packages/req_client"
 
 {_opts, args} =
   OptionParser.parse!(System.argv(), switches: [http2: :boolean], aliases: [t: :http2])
@@ -18,7 +16,8 @@ IO.puts("# Fetching url: #{url}")
 
 result =
   Rc.get!(url)
-  |> Map.take([:status, :body])
+  |> Map.get(:body, %{})
+  |> Map.take(~w[docs_html_url downloads html_url latest_stable_version latest_version meta])
 
 result
 |> dbg

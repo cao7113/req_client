@@ -499,10 +499,13 @@ defmodule ReqClient.BaseUtils do
     s: "https://slink.fly.dev/api/ping",
     # local
     l: "http://localhost:4000/api/ping",
+    b: "https://httpbin.org/get",
     x: "https://x.com",
     g: "https://www.google.com",
     gh: "https://api.github.com/repos/elixir-lang/elixir"
   ]
+
+  def shortcut_urls, do: @shortcut_urls
 
   def get_url(url) when is_atom(url), do: @shortcut_urls[url]
   def get_url(url) when is_binary(url), do: url

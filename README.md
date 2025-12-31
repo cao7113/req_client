@@ -7,10 +7,6 @@ Request client based on `req` & `mint` & `mint_websocket` etc. packages.
 
 Custom steps can be packaged into plugins so that they are even easier to use by others???
 
-## Todo
-
-[] httpc adapter like run_finch??? make adapter optinal, direct mint/finch/httpc/etc...
-
 ## Usage
 
 ```
