@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.1.9](https://github.com/cao7113/req_client/compare/v0.1.8...v0.1.9) (2025-12-31)
+
+
+
+
+### Improvements:
+
+* cli support shorturls and fix typo by Ryn Cao
+
 ## [v0.1.8](https://github.com/cao7113/req_client/compare/v0.1.7...v0.1.8) (2025-12-31)
 
 
