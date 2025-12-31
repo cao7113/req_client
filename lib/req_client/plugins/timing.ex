@@ -52,10 +52,11 @@ defmodule ReqClient.Plugin.Timing do
 
   # rtt: round-trip-time
   @rtt_key :req_client_rtt_ms
+  @rtt_header_name "x-req-client-rtt-ms"
 
   def put_timing_rtt(resp, diff_ms) do
     resp
-    |> Req.Response.put_header("x-req-rtt-ms", diff_ms |> to_string())
+    |> Req.Response.put_header(@rtt_header_name, diff_ms |> to_string())
     |> Req.Response.put_private(@rtt_key, diff_ms)
   end
 
@@ -74,8 +75,4 @@ defmodule ReqClient.Plugin.Timing do
     duration = get_duration(start, unit)
     {{duration, unit}, result}
   end
-
-  # def test_duration(unit \\ :microsecond) do
-  #   measure(fn -> :timer.sleep(100) end, unit)
-  # end
 end

@@ -56,20 +56,60 @@ defmodule ReqClient.Httpc do
     req(method, url, headers, URI.encode_query(body), opts)
   end
 
-  def req(method, url, headers, body, opts) do
+  def req(method, url, headers, body, opts) when is_map(headers) do
     unless opts[:no_check_deps], do: ensure_started!()
-    url = url |> ReqClient.BaseUtils.get_url()
 
+    url = ReqClient.BaseUtils.get_url(url)
+    url_cl = String.to_charlist(url)
+    {req_headers, ct_type} = get_req_headers(headers)
+    set_proxy(opts)
+
+    # https://www.erlang.org/doc/apps/inets/httpc.html#request/5
+    http_opts =
+      [
+        # timeout: :infinite
+        timeout: opts[:timeout] || 180_000
+      ] ++ smart_ssl_http_opts(url, opts)
+
+    # :binary or :string
+    req_opts = [body_format: :binary]
+
+    case method do
+      :get -> :httpc.request(:get, {url_cl, req_headers}, http_opts, req_opts)
+      _ -> :httpc.request(method, {url_cl, req_headers, ct_type, body}, http_opts, req_opts)
+    end
+    |> case do
+      {:ok, {{_http, status, _status_phrase}, headers, body}} ->
+        unless status in 200..299 do
+          Logger.warning("HTTP status #{status}")
+        end
+
+        headers = normalize_resp_headers(headers)
+
+        resp = %{
+          status: status,
+          headers: headers,
+          body: content_wise_body(body, headers)
+        }
+
+        {:ok, resp}
+
+      {:error, _reason} = err ->
+        err
+    end
+  end
+
+  def set_proxy(opts \\ []) do
     case opts[:proxy] do
+      p when p in [false, :no] ->
+        :disable
+
       p when p in [true, :env, nil] ->
         ProxyUtils.get_proxy_opts(:httpc, opts)
 
-      p when p in [false, :no] ->
-        nil
-
       other ->
-        Logger.debug("not support proxy-setting: #{other |> inspect}")
-        nil
+        Logger.debug("unknown proxy: #{other |> inspect}")
+        :unknown_proxy
     end
     |> case do
       proxy_opts when is_list(proxy_opts) ->
@@ -87,12 +127,9 @@ defmodule ReqClient.Httpc do
 
         ReqClient.Httpc.Utils.remove_proxy()
     end
+  end
 
-    headers =
-      headers
-      |> Map.put_new("content-type", "text/html")
-      |> Map.put_new("user-agent", "erlang/httpc")
-
+  def get_req_headers(headers) when is_map(headers) do
     headers =
       if Map.has_key?(headers, "accept-encoding") do
         Logger.warning(
@@ -103,60 +140,36 @@ defmodule ReqClient.Httpc do
       else
         headers
       end
+      |> Map.put_new("user-agent", "erlang/httpc")
+      |> Map.put_new("content-type", "text/html")
 
-    ct_type =
-      headers["content-type"]
-      |> String.to_charlist()
+    ct_type = headers["content-type"] |> String.to_charlist()
 
     headers =
-      Enum.map(headers, fn {k, v} ->
+      headers
+      |> Enum.map(fn {k, v} ->
         {String.to_charlist(k), String.to_charlist(v)}
       end)
 
-    # https://www.erlang.org/doc/apps/inets/httpc.html#request/5
-    http_opts =
-      [
-        # timeout: :infinite
-        timeout: opts[:timeout] || 180_000
-      ] ++ smart_ssl_http_opts(url, opts)
+    {headers, ct_type}
+  end
 
-    url_cl = String.to_charlist(url)
+  def normalize_resp_headers(headers \\ []) when is_list(headers) do
+    headers
+    |> Enum.reduce(%{}, fn {k, v}, acc ->
+      k = k |> to_string() |> String.downcase()
+      v = to_string(v)
+      existed = Map.get(acc, k)
 
-    # :binary or :string
-    body_format = :binary
-    req_opts = [body_format: body_format]
-    timing? = opts[:timing]
-
-    fun = fn ->
-      case method do
-        :get -> :httpc.request(:get, {url_cl, headers}, http_opts, req_opts)
-        _ -> :httpc.request(method, {url_cl, headers, ct_type, body}, http_opts, req_opts)
-      end
-    end
-
-    {duration_ms, resp} = if timing?, do: :timer.tc(fun, :millisecond), else: {0, fun.()}
-
-    resp
-    |> case do
-      {:ok, {{_http, status, _status_phrase}, headers, body}} ->
-        unless status in 200..299 do
-          Logger.warning("HTTP status #{status}")
+      new_val =
+        if existed do
+          existed ++ [v]
+        else
+          [v]
         end
 
-        headers =
-          headers ++ if timing?, do: [{~c"x-httpc-duration-ms", ~c"#{duration_ms}"}], else: []
-
-        resp = %{
-          status: status,
-          headers: headers,
-          body: content_wise_body(body, headers)
-        }
-
-        {:ok, resp}
-
-      {:error, _reason} = err ->
-        err
-    end
+      Map.put(acc, k, new_val)
+    end)
   end
 
   def smart_ssl_http_opts("http://" <> _, _opts), do: []
@@ -209,7 +222,7 @@ defmodule ReqClient.Httpc do
     [ssl: conf]
   end
 
-  def content_wise_body(body, headers) when is_list(headers) do
+  def content_wise_body(body, headers) when is_map(headers) do
     if is_json_resp?(headers) do
       body |> JSON.decode!()
     else
@@ -220,23 +233,15 @@ defmodule ReqClient.Httpc do
   @doc """
   Get content-type from response headers
   """
-  def get_resp_content_type(headers) when is_list(headers) do
+  def get_resp_content_type(headers) when is_map(headers) do
     headers
-    |> nomalize_headers()
     |> Enum.find_value(fn
-      {"content-type", v} -> v
+      {"content-type", v} when is_list(v) -> List.first(v)
       _ -> nil
     end)
   end
 
-  def nomalize_headers(headers) when is_list(headers) do
-    headers
-    |> Enum.map(fn {k, v} ->
-      {k |> to_string() |> String.downcase(), v |> to_string()}
-    end)
-  end
-
-  def is_json_resp?(headers) when is_list(headers) do
+  def is_json_resp?(headers) when is_map(headers) do
     case get_resp_content_type(headers) do
       ct when is_binary(ct) -> String.contains?(ct, "application/json")
       _ -> false
@@ -501,7 +506,7 @@ defmodule ReqClient.BaseUtils do
     l: "http://localhost:4000/api/ping",
     b: "https://httpbin.org/get",
     x: "https://x.com",
-    g: "https://www.google.com",
+    g: "https://google.com",
     gh: "https://api.github.com/repos/elixir-lang/elixir"
   ]
 

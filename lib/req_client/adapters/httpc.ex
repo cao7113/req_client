@@ -13,21 +13,10 @@ defmodule ReqClient.Adapter.Httpc do
 
   def run(%{method: method, url: url, body: body} = req, _payload) do
     url = URI.to_string(url)
-    headers = get_headers(req)
+    req_headers = get_req_headers(req)
     req_opts = get_req_opts(req)
-
-    {:ok, resp} = Httpc.req(method, url, headers, body, req_opts)
-
-    resp =
-      resp
-      |> Map.update(:headers, %{}, fn existing_headers ->
-        existing_headers
-        |> Enum.map(fn {k, v} ->
-          {k |> to_string, v |> to_string()}
-        end)
-      end)
-      |> Req.Response.new()
-
+    {:ok, resp} = Httpc.req(method, url, req_headers, body, req_opts)
+    resp = resp |> Req.Response.new()
     {req, resp}
   end
 
@@ -36,11 +25,10 @@ defmodule ReqClient.Adapter.Httpc do
     opts |> Enum.to_list()
   end
 
-  def get_headers(req) do
-    # , join the value list?
-    for {name, values} <- req.headers,
-        value <- values do
-      {name, value}
+  def get_req_headers(req) do
+    for {name, values} <- req.headers do
+      # only use first value
+      {name, List.first(values)}
     end
     |> Map.new()
   end

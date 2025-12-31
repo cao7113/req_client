@@ -224,7 +224,7 @@ defmodule ReqClient.Mint do
     do: headers |> Enum.into(%{}) |> get_req_headers()
 
   @default_method :get
-  def normalize_method(method \\ [])
+  def normalize_method(method \\ nil)
   def normalize_method(nil), do: @default_method |> normalize_method()
   def normalize_method(method) when is_atom(method), do: method |> to_string |> normalize_method()
   def normalize_method(m) when is_binary(m), do: m |> String.upcase()

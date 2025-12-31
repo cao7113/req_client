@@ -12,7 +12,7 @@ defmodule ReqClient.Plugin.Wrapper do
 
   @default_kind :req
   # adapter kind
-  @kinds [:stub, :stub_finch, :mint, :httpc, :echo, @default_kind]
+  @kinds [:stub, :options, :mint, :httpc, :echo, @default_kind]
   @kind_aliases [
     hc: :httpc,
     m: :mint,
@@ -89,12 +89,7 @@ defmodule ReqClient.Plugin.Wrapper do
   end
 
   def adapter_module_of(kind) when is_atom(kind) do
-    Module.concat(
-      ReqClient.Adapter,
-      kind
-      |> to_string
-      |> Macro.camelize()
-    )
+    Module.concat(ReqClient.Adapter, kind |> to_string |> Macro.camelize())
   end
 
   @doc """

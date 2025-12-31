@@ -32,13 +32,11 @@ defmodule ReqClient.Plugin.Inspect do
     enabled = ReqClient.verbose?(req) && enable_inspect(req, :request)
 
     if ReqClient.verbose?(req) && enabled do
-      %{method: method, url: url, body: body, headers: _headers} =
-        req
-        |> Map.update!(:url, &URI.to_string/1)
+      %{method: method, url: url, body: body, headers: req_headers} =
+        req |> Map.update!(:url, &URI.to_string/1)
 
       method_str = method |> to_string() |> String.upcase()
-      Logger.info("#{method_str} #{url}")
-      Logger.debug("req options: #{req.options |> inspect()}")
+      Logger.info("#{method_str} #{url} with headers: #{req_headers |> inspect}")
 
       req_body =
         cond do
@@ -76,7 +74,7 @@ defmodule ReqClient.Plugin.Inspect do
     Req.Request.get_option(req, :inspect, [:request])
     |> case do
       :all -> [:request, :response]
-      o when is_list(o) -> o
+      items when is_list(items) -> items
       o -> [o]
     end
   end
