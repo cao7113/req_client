@@ -1,6 +1,6 @@
-defmodule ReqClient.Adapter.Finch do
+defmodule ReqClient.Adapter.Req do
   @moduledoc """
-  Req finch adapter (req builtin), default in req_client
+  Req (req builtin) adapter, default in req_client
 
   eg. R.g :x, debug: true
 
@@ -25,18 +25,17 @@ defmodule ReqClient.Adapter.Finch do
 
   require Logger
 
-  @doc """
-  {scheme, address, port, opts}
-  """
   def run(req, _payload) do
     req
     |> maybe_proxy_req()
-    # Req.Finch.run(req)
-    |> Req.Steps.run_finch()
+    # |> Req.Steps.run_finch()
+    |> Req.Finch.run()
   end
 
-  def maybe_proxy_req(%{options: options} = req) do
-    ReqClient.Adapter.Mint.maybe_proxy_opts(req)
+  def maybe_proxy_req(%{url: uri, options: options} = req) do
+    opts = options |> Enum.to_list()
+
+    ReqClient.Mint.maybe_proxy_opts(uri, opts)
     |> case do
       [] ->
         req

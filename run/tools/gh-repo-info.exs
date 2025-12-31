@@ -39,7 +39,7 @@ ropts = Keyword.take(opts, ReqClient.get_option_list())
 
       resp
       |> Map.take([:status, :body])
-      |> Map.put(:req_duration, du)
+      |> Map.put(:req_taken_ms, du)
     end,
     :millisecond
   )

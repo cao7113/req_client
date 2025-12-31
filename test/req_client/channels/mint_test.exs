@@ -5,10 +5,6 @@ defmodule ReqClient.MintTest do
   @moduletag :external
 
   test "get" do
-    # Mint.get("http://localhost:4000/api/ping")
-    # |> dbg
-
-    Mint.get("https://slink.fly.dev/api/ping")
-    |> dbg
+    assert {:ok, %{status: 200}} = Mint.get("https://x.com", debug: true)
   end
 end

@@ -30,6 +30,9 @@ defmodule ReqClient.Adapter.Stub do
       |> case do
         %Req.Response{} = resp -> Req.Response.put_private(resp, :req_client_stub, true)
         %{__exception__: true} = err -> err
+        # non-response return skip response-steps?
+        # ** (RuntimeError) expected adapter to return {request, response} or {request, exception}, got: {request, data}
+        # {:any, data} -> data
         data -> Req.Response.new(body: data)
       end
 

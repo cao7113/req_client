@@ -5,19 +5,19 @@ defmodule ReqClient.Plugin.Wrapper do
 
   require Logger
 
-  @options [:wrap, :wrapper, :w, :kind]
+  @options [:wrap, :wrapper, :w, :kind, :k]
   @stub_option :stub
   @playload_options [:wrap_payload, :wrapper_payload, :payload, :p]
   @verbose_options [:verbose, :debug, :d]
 
-  @default_kind :finch
+  @default_kind :req
   # adapter kind
-  @kinds [:stub, :mint, :httpc, :finch]
+  @kinds [:stub, :stub_finch, :mint, :httpc, :echo, @default_kind]
   @kind_aliases [
     hc: :httpc,
     m: :mint,
     s: :stub,
-    f: :finch
+    r: :req
   ]
 
   def attach(req, opts \\ []) do
@@ -66,7 +66,7 @@ defmodule ReqClient.Plugin.Wrapper do
   ## Adapter related
 
   @doc """
-  Run the real adapt logic, eg. Req.Steps.run_finch(req)
+  Run the real adapter logic
 
   NOTE:
   - adapter step run after all request-steps
@@ -75,8 +75,8 @@ defmodule ReqClient.Plugin.Wrapper do
   def run_adapt(req) do
     kind = Req.Request.get_private(req, :wrapper)
     payload = Req.Request.get_private(req, :wrapper_payload)
-    # adapt(kind, req, payload)
-    adapter_mod = Module.concat(ReqClient.Adapter, kind |> to_string |> String.capitalize())
+    # todo put here login in pre_wrap???
+    adapter_mod = adapter_module_of(kind)
 
     if ReqClient.verbose?(req) do
       Logger.debug(
@@ -84,7 +84,17 @@ defmodule ReqClient.Plugin.Wrapper do
       )
     end
 
+    # todo use a behavior for adapter modules?
     apply(adapter_mod, :run, [req, payload])
+  end
+
+  def adapter_module_of(kind) when is_atom(kind) do
+    Module.concat(
+      ReqClient.Adapter,
+      kind
+      |> to_string
+      |> Macro.camelize()
+    )
   end
 
   @doc """

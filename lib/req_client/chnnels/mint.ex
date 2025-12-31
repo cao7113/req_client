@@ -1,9 +1,253 @@
 defmodule ReqClient.Mint do
   @moduledoc """
-  http(1/2) connection owner process directly based on mint package
+  Simple http(1/2) client only depends-on mint package in passive mode like finch package!
 
   - mainly used in script
-  - can request many resources on same host
+
+  ## Example
+
+  eg. R.Mint.get :x
+
+  ## Todo
+  - support request_timeout as total like finch
+  - http2 not work with proxy??? If both :http1 and :http2 are present in the list passed in the :protocols option, the protocol negotiation happens in the following way:
+
+  ## Links
+  - https://hexdocs.pm/mint/Mint.HTTP.html#content
+  - https://hexdocs.pm/mint/architecture.html#wrapping-a-mint-connection-in-a-genserver
+  """
+
+  alias Mint.HTTP
+  require Logger
+
+  def get(url, opts \\ []) do
+    url
+    |> ReqClient.BaseUtils.get_url()
+    |> req(opts)
+  end
+
+  def req(uri, opts \\ [])
+
+  def req("http" <> _ = url, opts) do
+    url |> URI.parse() |> req(opts)
+  end
+
+  def req(%URI{} = uri, opts) do
+    method = normalize_method(opts[:method])
+    headers = get_req_headers(opts[:headers])
+    body = opts[:body] || nil
+
+    path = request_path(uri)
+    opts = opts |> Keyword.merge(maybe_proxy_opts(uri, opts))
+    recv_timeout = opts[:receive_timeout] |> get_recv_timeout()
+
+    with {:ok, conn} <- get_conn(uri, opts),
+         {:ok, conn, ref} <- HTTP.request(conn, method, path, headers, body),
+         {:ok, _conn, frames} <- recv(conn, 0, recv_timeout, []),
+         {:ok, resp} <- format_response(frames, ref) do
+      {:ok, resp}
+    end
+  end
+
+  def recv(conn, byte_count, timeout, acc \\ [], times \\ 0) do
+    with {:ok, conn, responses} <- HTTP.recv(conn, byte_count, timeout) do
+      acc = acc ++ responses
+      Logger.debug("[##{times}] recv: #{simple_responses(acc) |> inspect}")
+
+      case responses do
+        [] ->
+          recv(conn, byte_count, timeout, acc, times + 1)
+
+        items ->
+          if recv_done?(items) do
+            Logger.debug("[##{times}] done recv!")
+            {:ok, conn, acc}
+          else
+            recv(conn, byte_count, timeout, acc, times + 1)
+          end
+      end
+    end
+  end
+
+  @default_receive_timeout 15_000
+  def get_recv_timeout(nil), do: @default_receive_timeout
+  def get_recv_timeout(n), do: n
+
+  def recv_done?(responses) do
+    Enum.any?(responses, fn item -> elem(item, 0) == :done end)
+  end
+
+  def get_conn(url, opts \\ [])
+
+  def get_conn(%URI{scheme: scheme} = uri, opts) do
+    scheme = scheme |> String.to_atom()
+
+    opts = get_connect_opts(opts)
+
+    with {:ok, conn} <- HTTP.connect(scheme, uri.host, uri.port, opts) do
+      {:ok, conn}
+    else
+      err -> err
+    end
+  end
+
+  def get_conn("http" <> _ = url, opts) do
+    url |> URI.parse() |> get_conn(opts)
+  end
+
+  @force_connect_opts [
+    # protocols: [:http1],
+    mode: :passive
+  ]
+
+  @default_connect_opts [
+    # :mode - (:active or :passive), default is :active
+    mode: :passive,
+    log: true,
+    protocols: [:http1],
+    transport_opts: [
+      timeout: 60_000
+    ]
+  ]
+
+  def get_connect_opts(opts \\ []) do
+    @default_connect_opts
+    |> Keyword.merge(opts)
+    |> Keyword.merge(@force_connect_opts)
+  end
+
+  ## Proxy support
+
+  def maybe_proxy_opts(%URI{} = uri, opts \\ []) when is_list(opts) do
+    proxy = opts[:proxy]
+
+    case proxy do
+      p when p in [false, :no] ->
+        :dsiabled
+
+      p when p in [true, :env, nil] ->
+        no_proxy_list = ReqClient.ProxyUtils.get_no_proxy_list(:curl)
+
+        if no_proxy?(uri, no_proxy_list) do
+          :hit_no_proxy_rules
+        else
+          get_proxy_tuple()
+        end
+
+      other ->
+        Logger.warning("unknown proxy: #{other |> inspect}")
+        :unknown_proxy_value
+    end
+    |> case do
+      proxy_tuple when is_tuple(proxy_tuple) and tuple_size(proxy_tuple) == 4 ->
+        if opts[:debug] do
+          Logger.debug("use proxy opts: #{proxy_tuple |> inspect}")
+        end
+
+        [proxy: proxy_tuple]
+
+      reason ->
+        if opts[:debug] do
+          Logger.debug("skip proxy beacause #{reason |> inspect}!!!")
+        end
+
+        []
+    end
+  end
+
+  def get_proxy_tuple do
+    ReqClient.ProxyUtils.get_http_proxy(:curl)
+    |> case do
+      nil ->
+        :no_http_proxy_set_for_curl
+
+      proxy_url ->
+        %{scheme: scheme, host: host, port: port} = URI.parse(proxy_url)
+        {scheme |> String.to_existing_atom(), host, port, []}
+    end
+  end
+
+  def no_proxy?(%{host: host}, no_proxy_list \\ []) when is_binary(host) do
+    Enum.any?(no_proxy_list, fn rule ->
+      String.contains?(host, rule)
+    end)
+  end
+
+  ## Utils
+
+  def format_response(resp, ref) when is_reference(ref) do
+    resp =
+      resp
+      |> Enum.reduce(%{}, fn
+        {:done, ^ref}, acc ->
+          acc
+
+        {field, ^ref, val}, acc ->
+          if field not in [:status, :headers, :data] do
+            Logger.warning("unknown #{%{field: field, value: val} |> inspect}")
+          end
+
+          merge_value =
+            acc
+            |> Map.get(field)
+            |> case do
+              nil -> val
+              existed -> existed <> val
+            end
+
+          Map.put(acc, field, merge_value)
+
+        other, acc ->
+          Logger.warning("unknown #{other |> inspect}")
+          acc
+      end)
+
+    {:ok, resp}
+  end
+
+  def simple_responses(resp) do
+    resp
+    |> Enum.reduce([], fn item, acc ->
+      acc ++ [elem(item, 0)]
+    end)
+    |> Enum.uniq()
+  end
+
+  @default_req_headers %{"user-agent" => "req-client/mint"}
+  def get_req_headers(headers \\ %{})
+  def get_req_headers(nil), do: get_req_headers(%{})
+
+  def get_req_headers(headers) when is_map(headers),
+    do: @default_req_headers |> Map.merge(headers) |> Enum.to_list()
+
+  def get_req_headers(headers) when is_list(headers),
+    do: headers |> Enum.into(%{}) |> get_req_headers()
+
+  @default_method :get
+  def normalize_method(method \\ [])
+  def normalize_method(nil), do: @default_method |> normalize_method()
+  def normalize_method(method) when is_atom(method), do: method |> to_string |> normalize_method()
+  def normalize_method(m) when is_binary(m), do: m |> String.upcase()
+
+  def request_path(%{path: nil, query: nil}), do: "/"
+  def request_path(%{path: path, query: nil}), do: path
+  def request_path(%{path: path, query: ""}), do: path
+  def request_path(%{path: path, query: query}), do: "#{path}?#{query}"
+
+  def get_protocol(%{conn: conn}) when not is_nil(conn) do
+    # h2? = is_struct(conn, Mint.HTTP2)
+    # IO.puts("#http2: #{h2?}")
+    Mint.HTTP.protocol(conn)
+  end
+
+  def get_protocol(_), do: nil
+end
+
+defmodule ReqClient.MintAgent do
+  @moduledoc """
+  Mint works in active mode with GenServer.
+
+  not works now
 
   ## Links
   - https://hexdocs.pm/mint/Mint.HTTP.html#content
@@ -27,7 +271,7 @@ defmodule ReqClient.Mint do
   iex> ReqClient.Mint.get("http://localhost:4000/api/ping")
   """
   def get(url, opts \\ []) do
-    url = ReqClient.Utils.get_url(url)
+    url = ReqClient.BaseUtils.get_url(url)
     opts = opts |> Keyword.put(:method, "GET")
     request(url, opts)
   end
@@ -72,8 +316,8 @@ defmodule ReqClient.Mint do
   # https://hexdocs.pm/mint/Mint.HTTP.html#connect/4-options
   def get_connect_opts(opts \\ []) do
     [
-      # log: true,
-      # proxy: [],
+      # :mode - (:active or :passive), default is :active
+      mode: :passive,
       # If you are using OTP 25+ it is recommended to set this option.
       # Mint.HTTP.connect(:https, host, port, transport_opts: [cacerts: :public_key.cacerts_get()])
       transport_opts: [
@@ -86,7 +330,9 @@ defmodule ReqClient.Mint do
         # ],
         timeout: 30_000
       ],
-      protocols: [:http1]
+      # http2 not works for proxy?
+      protocols: [:http1],
+      log: true
     ]
     |> Keyword.merge(opts)
   end
@@ -191,8 +437,6 @@ defmodule ReqClient.Mint do
 
   @impl true
   def init({scheme, host, port, connect_opts}) do
-    connect_opts |> dbg
-
     case Mint.HTTP.connect(scheme, host, port, connect_opts) do
       {:ok, conn} ->
         state = %__MODULE__{conn: conn}
@@ -208,8 +452,6 @@ defmodule ReqClient.Mint do
     # In both the successful case and the error case, we make sure to update the connection
     # struct in the state since the connection is an immutable data structure.
 
-    state.conn |> dbg
-
     case Mint.HTTP.request(state.conn, method, path, headers, body) do
       {:ok, conn, request_ref} ->
         state = put_in(state.conn, conn)
@@ -221,10 +463,6 @@ defmodule ReqClient.Mint do
       {:error, conn, reason} ->
         state = put_in(state.conn, conn)
         {:reply, {:error, reason}, state}
-
-      err ->
-        err |> dbg
-        {:noreply, state}
     end
   end
 
@@ -281,7 +519,9 @@ defmodule ReqClient.Mint do
   end
 
   defp process_response({:data, request_ref, new_data}, state) do
-    update_in(state.requests[request_ref].response[:data], fn data -> (data || "") <> new_data end)
+    update_in(state.requests[request_ref].response[:data], fn data ->
+      (data || "") <> new_data
+    end)
   end
 
   # When the request is done, we use GenServer.reply/2 to reply to the caller that was

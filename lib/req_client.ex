@@ -37,32 +37,20 @@ defmodule ReqClient do
       iex> ReqClient.#{req_method} "https://httpbin.org/#{req_method}"
     """
     def unquote(req_method)(url, opts \\ []) do
-      url = ReqClient.Utils.get_url(url)
-
-      opts =
-        opts
-        |> Keyword.put_new(:url, url)
-        |> new()
-
+      opts = opts |> Keyword.put(:url, url) |> new()
       apply(Req, unquote(req_method), [opts])
     end
 
-    req_bang_method = "#{req_method}!" |> String.to_atom()
+    req_method_with_bang = "#{req_method}!" |> String.to_atom()
 
     @doc """
     #{req_method |> to_string |> String.capitalize()} request with direct response
     ## Example
-      iex> ReqClient.#{req_bang_method} "https://httpbin.org/#{req_method}"
+      iex> ReqClient.#{req_method_with_bang} "https://httpbin.org/#{req_method}"
     """
-    def unquote(req_bang_method)(url, opts \\ []) do
-      url = ReqClient.Utils.get_url(url)
-
-      opts =
-        opts
-        |> Keyword.put_new(:url, url)
-        |> new()
-
-      apply(Req, unquote(req_bang_method), [opts])
+    def unquote(req_method_with_bang)(url, opts \\ []) do
+      opts = opts |> Keyword.put(:url, url) |> new()
+      apply(Req, unquote(req_method_with_bang), [opts])
     end
   end)
 
@@ -81,6 +69,8 @@ defmodule ReqClient do
   Build a new Req client request with custom plugins
   """
   def new(opts \\ []) do
+    opts = Keyword.replace_lazy(opts, :url, &ReqClient.BaseUtils.get_url/1)
+
     r =
       default_opts()
       |> Keyword.put(:adapter, &ReqClient.Plugin.Wrapper.run_adapt/1)
@@ -113,12 +103,13 @@ defmodule ReqClient do
         #   # cacerts: :public_key.cacerts_get()
         #   verify: :verify_none
         # ],
-        # # not works direct with socks5h here!!!
-        # # use below from https://github.com/oyyd/http-proxy-to-socks
-        # # hpts -s 127.0.0.1:1080 -p 8080
         # proxy: {:http, "localhost", 1087, []}
       ]
     ]
+  end
+
+  def finch_pool_opts(request) do
+    Req.Finch.pool_options(request.options)
   end
 
   def verbose?(req), do: ReqClient.Plugin.Wrapper.verbose?(req)
@@ -144,4 +135,6 @@ defmodule ReqClient do
     |> MapSet.to_list()
     |> Enum.sort()
   end
+
+  def list_options(r \\ new()), do: get_option_list(r)
 end

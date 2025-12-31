@@ -9,8 +9,7 @@ tasks:
   sh: iex --erl "-kernel shell_history enabled" -S mix
   fmt: mix format
 
-  setup: |
-    mix deps.get
+  test.all: mix test --include try --include external
 
   build:
     aliases: ["b"] 
@@ -28,3 +27,6 @@ tasks:
   ops.up: mix git_ops.release --yes && git push --follow-tags
   prj.info: mix git_ops.project_info
   ops.init: mix git_ops.release --initial
+
+  setup: |
+    mix deps.get

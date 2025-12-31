@@ -1,9 +1,12 @@
 defmodule ReqClient.Httpc do
   @moduledoc """
-  Simple HTTP Client by wrapping :httpc (erlang builtin HTTP/1.1 client)
+  Simple http/1 Client by wrapping :httpc (erlang builtin HTTP/1.1 client)
 
   NOTE: please keep this file standalone, so it can be used in archives like ehelper!!!
   - DONOT depends on non-elixir builtin modules
+
+  ## todo
+  - improve to use standalone profile for proxy and custom options
 
   ## Links
   - https://www.erlang.org/doc/apps/inets/httpc.html from inets app
@@ -21,10 +24,10 @@ defmodule ReqClient.Httpc do
   def get(url, opts \\ []) do
     headers = opts[:headers] || %{}
     body = opts[:body] || %{}
-    request(:get, url, headers, body, opts)
+    req(:get, url, headers, body, opts)
   end
 
-  def direct(url), do: :httpc.request(url)
+  def direct(url), do: url |> ReqClient.BaseUtils.get_url() |> :httpc.request()
 
   @doc """
   Performs HTTP Request and returns Response
@@ -37,24 +40,25 @@ defmodule ReqClient.Httpc do
 
   ## Examples
 
-      iex> ReqClient.Httpc.request(:get, "http://127.0.0.1", %{})
+      iex> ReqClient.Httpc.req(:get, "http://127.0.0.1", %{})
       {:ok, %Response{..})
 
-      iex> ReqClient.Httpc.request(:post, "http://127.0.0.1", %{}, param1: "val1")
+      iex> ReqClient.Httpc.req(:post, "http://127.0.0.1", %{}, param1: "val1")
       {:ok, %Response{..})
 
-      iex> ReqClient.Httpc.request(:get, "http://unknownhost", %{}, param1: "val1")
+      iex> ReqClient.Httpc.req(:get, "http://unknownhost", %{}, param1: "val1")
       {:error, ...}
 
   """
-  def request(method, url, headers, body \\ "", opts \\ [])
+  def req(method, url, headers, body \\ "", opts \\ [])
 
-  def request(method, url, headers, body, opts) when is_map(body) do
-    request(method, url, headers, URI.encode_query(body), opts)
+  def req(method, url, headers, body, opts) when is_map(body) do
+    req(method, url, headers, URI.encode_query(body), opts)
   end
 
-  def request(method, url, headers, body, opts) do
+  def req(method, url, headers, body, opts) do
     unless opts[:no_check_deps], do: ensure_started!()
+    url = url |> ReqClient.BaseUtils.get_url()
 
     case opts[:proxy] do
       p when p in [true, :env, nil] ->
@@ -121,17 +125,16 @@ defmodule ReqClient.Httpc do
     # :binary or :string
     body_format = :binary
     req_opts = [body_format: body_format]
+    timing? = opts[:timing]
 
-    {duration_ms, resp} =
-      :timer.tc(
-        fn ->
-          case method do
-            :get -> :httpc.request(:get, {url_cl, headers}, http_opts, req_opts)
-            _ -> :httpc.request(method, {url_cl, headers, ct_type, body}, http_opts, req_opts)
-          end
-        end,
-        :millisecond
-      )
+    fun = fn ->
+      case method do
+        :get -> :httpc.request(:get, {url_cl, headers}, http_opts, req_opts)
+        _ -> :httpc.request(method, {url_cl, headers, ct_type, body}, http_opts, req_opts)
+      end
+    end
+
+    {duration_ms, resp} = if timing?, do: :timer.tc(fun, :millisecond), else: {0, fun.()}
 
     resp
     |> case do
@@ -141,17 +144,18 @@ defmodule ReqClient.Httpc do
         end
 
         headers =
-          headers ++
-            [{~c"x-httpc-duration-ms", ~c"#{duration_ms}"}]
+          headers ++ if timing?, do: [{~c"x-httpc-duration-ms", ~c"#{duration_ms}"}], else: []
 
-        %{
+        resp = %{
           status: status,
           headers: headers,
           body: content_wise_body(body, headers)
         }
 
-      {:error, reason} ->
-        raise "failed request with #{reason |> inspect()}"
+        {:ok, resp}
+
+      {:error, _reason} = err ->
+        err
     end
   end
 
@@ -389,7 +393,6 @@ end
 
 defmodule ReqClient.ProxyUtils do
   @moduledoc """
-  todo refactor only for httpc except base, no mint
   """
 
   alias ReqClient.BaseUtils
@@ -409,7 +412,7 @@ defmodule ReqClient.ProxyUtils do
   def get_proxy_opts(kind \\ :httpc, opts \\ [])
 
   def get_proxy_opts(kind = :httpc, opts) do
-    opts = Keyword.put_new(opts, :no_proxy, get_no_proxy_list(kind, opts))
+    opts = Keyword.put_new(opts, :no_proxy, get_no_proxy_list(kind))
     proxy_opts = get_http_proxy(kind, opts)
     https_proxy_opts = get_https_proxy(kind, opts)
     proxy_opts ++ https_proxy_opts
@@ -459,42 +462,53 @@ defmodule ReqClient.ProxyUtils do
 
   ## no proxy
 
-  # @no_proxy_hosts ["127.0.0.1", "localhost", "192.168."]
+  def get_no_proxy_list(kind \\ :curl)
 
-  def get_no_proxy_list(kind \\ :curl, opts \\ [])
-
-  def get_no_proxy_list(:curl, _) do
+  def get_no_proxy_list(:curl) do
     ["NO_PROXY", "no_proxy"]
     |> BaseUtils.find_system_env()
-  end
-
-  def get_no_proxy_list(:mint, _opts) do
-    get_no_proxy_list(:curl)
     |> case do
       nil ->
         []
 
-      no_proxy ->
-        String.split(no_proxy, ",")
-        |> Enum.uniq()
+      rules ->
+        rules
+        |> String.split(",")
         |> Enum.map(&String.trim/1)
+        |> Enum.uniq()
     end
   end
 
-  def get_no_proxy_list(:httpc, _opts) do
-    get_no_proxy_list(:mint)
+  def get_no_proxy_list(kind = :httpc) do
+    get_no_proxy_list(:curl)
     |> Enum.map(fn item ->
       item
-      |> case do
-        "." <> domain -> "*.#{domain}"
-        host -> host
-      end
+      |> no_proxy_glob_host(kind)
       |> String.to_charlist()
     end)
   end
+
+  def no_proxy_glob_host("." <> domain, :httpc), do: "*.#{domain}"
+  def no_proxy_glob_host(host, _), do: host
 end
 
 defmodule ReqClient.BaseUtils do
+  # shortcut urls
+  @shortcut_urls [
+    default: "https://slink.fly.dev/api/ping",
+    s: "https://slink.fly.dev/api/ping",
+    # local
+    l: "http://localhost:4000/api/ping",
+    x: "https://x.com",
+    g: "https://www.google.com",
+    gh: "https://api.github.com/repos/elixir-lang/elixir"
+  ]
+
+  def get_url(url) when is_atom(url), do: @shortcut_urls[url]
+  def get_url(url) when is_binary(url), do: url
+
+  ## ENV
+
   def find_system_env(keys, default \\ nil) do
     keys
     |> List.wrap()

@@ -1,18 +1,4 @@
 defmodule ReqClient.Utils do
-  # shortcut urls
-  @shortcut_urls [
-    default: "https://slink.fly.dev/api/ping",
-    s: "https://slink.fly.dev/api/ping",
-    # local
-    l: "http://localhost:4000/api/ping",
-    x: "https://x.com",
-    g: "https://www.google.com",
-    gh: "https://api.github.com/repos/elixir-lang/elixir"
-  ]
-
-  def get_url(url) when is_atom(url), do: @shortcut_urls[url]
-  def get_url(url), do: url
-
   def default_req_opts do
     Req.default_options()
   end

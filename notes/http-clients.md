@@ -49,3 +49,4 @@ use shadowsocks-ng 1087 port!!!! 2025.12.20
 ```
 npm install -g http-proxy-to-socks
 hpts -s 127.0.0.1:1080 -p 8080
+```

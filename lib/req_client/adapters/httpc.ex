@@ -16,8 +16,10 @@ defmodule ReqClient.Adapter.Httpc do
     headers = get_headers(req)
     req_opts = get_req_opts(req)
 
+    {:ok, resp} = Httpc.req(method, url, headers, body, req_opts)
+
     resp =
-      Httpc.request(method, url, headers, body, req_opts)
+      resp
       |> Map.update(:headers, %{}, fn existing_headers ->
         existing_headers
         |> Enum.map(fn {k, v} ->
@@ -30,8 +32,8 @@ defmodule ReqClient.Adapter.Httpc do
   end
 
   def get_req_opts(%{options: opts} = _req) do
+    # todo: normalize verbose to debug
     opts |> Enum.to_list()
-    # todo: verbose to debug
   end
 
   def get_headers(req) do

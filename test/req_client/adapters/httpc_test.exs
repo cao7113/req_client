@@ -3,21 +3,16 @@ defmodule ReqClient.Adapter.HttpcTest do
 
   alias ReqClient, as: Rc
 
-  @moduletag :try
+  @moduletag :external
 
   describe "run_httpc" do
     test "ok" do
-      assert %Req.Response{
-               status: 200,
-               headers: %{
-                 "cache-control" => [_],
-                 "content-type" => ["application/json; charset=utf-8"],
-                 "date" => [_]
-               },
-               body: %{"msg" => "pong"},
-               trailers: %{},
-               private: %{}
-             } = Rc.get!("https://slink.fly.dev/api/ping", wrap: :httpc)
+      assert {:ok,
+              %Req.Response{
+                status: 200,
+                headers: _,
+                body: %{"msg" => "pong"}
+              }} = Rc.get("https://slink.fly.dev/api/ping", wrap: :httpc)
     end
   end
 end
