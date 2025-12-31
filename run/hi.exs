@@ -17,7 +17,7 @@ url = List.first(args) || default_url
 IO.puts("# Fetching url: #{url}")
 
 result =
-  Rc.get!(url)
+  Rc.get!(url, redirect: false)
   |> Map.take([:status, :body])
 
 result

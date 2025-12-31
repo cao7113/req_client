@@ -36,6 +36,7 @@ defmodule ReqClient.Mint do
     method = normalize_method(opts[:method])
     headers = get_req_headers(opts[:headers])
     body = opts[:body] || nil
+    debug? = Keyword.get(opts, :debug, false)
 
     path = request_path(uri)
     opts = opts |> Keyword.merge(maybe_proxy_opts(uri, opts))
@@ -43,27 +44,33 @@ defmodule ReqClient.Mint do
 
     with {:ok, conn} <- get_conn(uri, opts),
          {:ok, conn, ref} <- HTTP.request(conn, method, path, headers, body),
-         {:ok, _conn, frames} <- recv(conn, 0, recv_timeout, []),
+         {:ok, _conn, frames} <- recv(conn, 0, recv_timeout, [], debug?),
          {:ok, resp} <- format_response(frames, ref) do
       {:ok, resp}
     end
   end
 
-  def recv(conn, byte_count, timeout, acc \\ [], times \\ 0) do
+  def recv(conn, byte_count, timeout, acc \\ [], debug?, times \\ 0) do
     with {:ok, conn, responses} <- HTTP.recv(conn, byte_count, timeout) do
       acc = acc ++ responses
-      Logger.debug("[##{times}] recv: #{simple_responses(acc) |> inspect}")
+
+      if debug? do
+        Logger.debug("[##{times}] recv: #{simple_responses(acc) |> inspect}")
+      end
 
       case responses do
         [] ->
-          recv(conn, byte_count, timeout, acc, times + 1)
+          recv(conn, byte_count, timeout, acc, debug?, times + 1)
 
         items ->
           if recv_done?(items) do
-            Logger.debug("[##{times}] done recv!")
+            if debug? do
+              Logger.debug("[##{times}] done recv!")
+            end
+
             {:ok, conn, acc}
           else
-            recv(conn, byte_count, timeout, acc, times + 1)
+            recv(conn, byte_count, timeout, acc, debug?, times + 1)
           end
       end
     end
