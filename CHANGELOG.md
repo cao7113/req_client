@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.1.11](https://github.com/cao7113/req_client/compare/v0.1.10...v0.1.11) (2026-01-01)
+
+
+
+
+### Improvements:
+
+* use ReqClient.Adapter behaviour to run adapters by Ryn Cao
+
 ## [v0.1.10](https://github.com/cao7113/req_client/compare/v0.1.9...v0.1.10) (2025-12-31)
 
 
