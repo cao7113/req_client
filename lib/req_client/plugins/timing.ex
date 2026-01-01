@@ -5,20 +5,21 @@ defmodule ReqClient.Plugin.Timing do
   Get request timing info.
   """
 
+  alias Req.{Request, Response}
   require Logger
 
   def attach(req, opts \\ []) do
     req
-    |> Req.Request.register_options([:timing, :verbose])
+    |> Request.register_options([:timing, :verbose])
     |> Req.merge(opts)
-    |> Req.Request.prepend_request_steps(begin_timing: &begin_timing_step/1)
-    |> Req.Request.append_response_steps(end_timing: &end_timing_step/1)
+    |> Request.prepend_request_steps(begin_timing: &begin_timing_step/1)
+    |> Request.append_response_steps(end_timing: &end_timing_step/1)
   end
 
   def begin_timing_step(req) do
-    if timing?(req) do
+    if enable?(req) do
       req
-      |> Req.Request.put_private(:begin_timing, System.monotonic_time())
+      |> Request.put_private(:begin_timing, System.monotonic_time())
     else
       req
     end
@@ -29,8 +30,8 @@ defmodule ReqClient.Plugin.Timing do
   """
   def end_timing_step({req, resp}) do
     resp =
-      if timing?(req) do
-        begin_at = Req.Request.get_private(req, :begin_timing)
+      if enable?(req) do
+        begin_at = Request.get_private(req, :begin_timing)
         duration = get_duration(begin_at, :microsecond)
         diff_ms = duration / 1000
 
@@ -46,22 +47,19 @@ defmodule ReqClient.Plugin.Timing do
     {req, resp}
   end
 
-  def timing?(req) do
-    Req.Request.get_option(req, :timing, false)
+  def enable?(req) do
+    Request.get_option(req, :timing, false)
   end
 
   # rtt: round-trip-time
   @rtt_key :req_client_rtt_ms
-  @rtt_header_name "x-req-client-rtt-ms"
 
   def put_timing_rtt(resp, diff_ms) do
-    resp
-    |> Req.Response.put_header(@rtt_header_name, diff_ms |> to_string())
-    |> Req.Response.put_private(@rtt_key, diff_ms)
+    Response.put_private(resp, @rtt_key, diff_ms)
   end
 
   def get_timing_rtt(resp) do
-    Req.Response.get_private(resp, @rtt_key, :no_timing_option)
+    Response.get_private(resp, @rtt_key, :no_timing_option)
   end
 
   def get_duration(begin_at, unit \\ :microsecond, begin_unit \\ :native) do

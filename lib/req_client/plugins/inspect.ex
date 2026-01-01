@@ -3,6 +3,7 @@ defmodule ReqClient.Plugin.Inspect do
   Req inspect plugin
   """
 
+  alias Req.{Request}
   require Logger
 
   @doc """
@@ -11,25 +12,14 @@ defmodule ReqClient.Plugin.Inspect do
   """
   def attach(req, opts \\ []) do
     req
-    |> Req.Request.register_options([:verbose, :inspect])
+    |> Request.register_options([:verbose, :inspect])
     |> Req.merge(opts)
-    |> Req.Request.append_request_steps(inspect_request: &inspect_request/1)
-    |> Req.Request.append_response_steps(inspect_resp: &inspect_resp/1)
-  end
-
-  def inspect_resp({req, resp}) do
-    enabled = ReqClient.verbose?(req) && enable_inspect(req, :resp)
-
-    if ReqClient.verbose?(req) && enabled do
-      %{status: status, body: body} = resp
-      Logger.info("Req.Response: [status: #{status}] #{body |> inspect} ")
-    end
-
-    {req, resp}
+    |> Request.append_request_steps(inspect_request: &inspect_request/1)
+    |> Request.append_response_steps(inspect_resp: &inspect_resp/1)
   end
 
   def inspect_request(req) do
-    enabled = ReqClient.verbose?(req) && enable_inspect(req, :request)
+    enabled = ReqClient.verbose?(req) && enable?(req, :request)
 
     if ReqClient.verbose?(req) && enabled do
       %{method: method, url: url, body: body, headers: req_headers} =
@@ -54,24 +44,30 @@ defmodule ReqClient.Plugin.Inspect do
         end
 
       if req_body do
-        # todo use ReqCurl plugin
-        Logger.info(
-          "\ncurl -H \"Content-Type: application/json\" -X #{method_str} --data '#{req_body}'  #{url} | jq",
-          tracing_id: nil
-        )
+        Logger.info("req-body: '#{req_body}'")
       end
     end
 
     req
   end
 
-  def enable_inspect(req, slot \\ :request) do
-    inspect_items(req)
-    |> Enum.member?(slot)
+  def inspect_resp({req, resp}) do
+    enabled = ReqClient.verbose?(req) && enable?(req, :resp)
+
+    if ReqClient.verbose?(req) && enabled do
+      %{status: status, body: body} = resp
+      Logger.info("Response: [status: #{status}] #{body |> inspect} ")
+    end
+
+    {req, resp}
+  end
+
+  def enable?(req, slot \\ :request) do
+    inspect_items(req) |> Enum.member?(slot)
   end
 
   def inspect_items(req) do
-    Req.Request.get_option(req, :inspect, [:request])
+    Request.get_option(req, :inspect, [:request])
     |> case do
       :all -> [:request, :response]
       items when is_list(items) -> items

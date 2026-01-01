@@ -66,19 +66,9 @@ result =
     {k,
      values
      |> Enum.sum()
-     |> round
+     |> round()
      |> div(repeat_times)}
   end)
   |> Enum.sort_by(fn {_k, v} -> v end)
 
-result |> dbg
-
-exit(:normal)
-
-## Some results
-# ./run/benchmark.exs http://localhost:4000/api/timeout/1000 -r
-# [mint: 1187, req: 1187, httpc: 1233]
-# ./run/benchmark.exs http://localhost:4000/api/timeout/1000 -r 10
-# [mint: 1246, req: 1246, httpc: 1312]
-# ./run/benchmark.exs http://localhost:4000/api/timeout/1000 -r 50
-# [req: 1629, mint: 1644, httpc: 1647]
+{repeat_times, result} |> dbg

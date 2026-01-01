@@ -16,7 +16,7 @@ defmodule ReqClient.Plugin.TraceId do
   Add a tracing-id to trace whole process
   """
   def add_tracing_id(req) do
-    if tracing?(req) do
+    if enable?(req) do
       tid = gen_unique_id()
 
       if ReqClient.verbose?(req) do
@@ -30,7 +30,7 @@ defmodule ReqClient.Plugin.TraceId do
     end
   end
 
-  def tracing?(req) do
+  def enable?(req) do
     Req.Request.get_option(req, :trace, false)
   end
 

@@ -24,6 +24,16 @@ tasks:
   hex.i: mix escript.install hex req_client --force
   gi: mix escript.install github cao7113/req_client --force
 
+  bench: |
+    url=http://localhost:4000/api/delay/1000/ms
+    mix run ./run/benchmark.exs $url -r 1
+    # [mint: 1187, req: 1187, httpc: 1233]
+    mix run ./run/benchmark.exs $url -r 10
+    # [mint: 1246, req: 1246, httpc: 1312]
+    mix run ./run/benchmark.exs $url -r 50
+    # [req: 1629, mint: 1644, httpc: 1647]
+    time curl $url
+
   ## Git ops
   ops.up: mix git_ops.release --yes && git push --follow-tags
   prj.info: mix git_ops.project_info

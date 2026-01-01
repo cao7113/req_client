@@ -5,15 +5,16 @@ defmodule ReqClient.Plugin.Breaker do
   Avoid builtin `run_plug` step, because it depends on plug dependency, mainly used for testing!
   """
 
+  alias Req.{Request, Response}
   require Logger
 
   @options [:break]
 
   def attach(req, opts \\ []) do
     req
-    |> Req.Request.register_options(@options ++ [:verbose])
+    |> Request.register_options(@options ++ [:verbose])
     |> Req.merge(opts)
-    |> Req.Request.append_request_steps(break_request: &break_request/1)
+    |> Request.append_request_steps(break_request: &break_request/1)
   end
 
   @doc """
@@ -29,13 +30,13 @@ defmodule ReqClient.Plugin.Breaker do
     end
     |> case do
       v when v in [nil, false, :none] -> nil
-      %Req.Response{} = resp -> resp
+      %Response{} = resp -> resp
       %{__exception__: true} = err -> err
-      data -> Req.Response.new(body: data)
+      data -> Response.new(body: data)
     end
     |> case do
-      %Req.Response{} = resp ->
-        resp = Req.Response.put_private(resp, :req_client_break, true)
+      %Response{} = resp ->
+        resp = Response.put_private(resp, :req_client_break, true)
 
         if ReqClient.verbose?(req) do
           Logger.info("Broken response: #{resp |> inspect}")

@@ -12,9 +12,10 @@ defmodule ReqClient.Adapter.Mint do
   :proxy - a {scheme, address, port, opts} tuple that identifies a proxy to connect to. See the "Proxying" section below for more information.
   :proxy_headers - a list of headers (Mint.Types.headers/0) to pass when using a proxy. They will be used for the CONNECT request in tunnel proxies or merged with every request for forward proxies.
   """
-
+  use ReqClient.Adapter
   require Logger
 
+  @impl true
   def run(
         %{url: uri, method: method, headers: headers, body: body, options: options} = req,
         _payload

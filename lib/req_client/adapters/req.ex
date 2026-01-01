@@ -22,9 +22,10 @@ defmodule ReqClient.Adapter.Req do
       iex> Req.get("https://httpbin.org/delay/1", receive_timeout: 0, retry: false)
       {:error, %Req.TransportError{reason: :timeout}}
   """
-
+  use ReqClient.Adapter
   require Logger
 
+  @impl true
   def run(req, _payload) do
     req
     |> maybe_proxy_req()

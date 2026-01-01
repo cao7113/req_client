@@ -17,8 +17,12 @@ defmodule ReqClient.Adapter.Stub do
     "it works!"
   """
 
-  require Logger
+  use ReqClient.Adapter
 
+  @impl true
+  def stub?(), do: true
+
+  @impl true
   def run(req, payload) do
     result =
       payload

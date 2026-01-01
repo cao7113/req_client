@@ -4,6 +4,9 @@ defmodule ReqClient.Plugin.Curl do
 
   todo
   - from curl command to Req request
+  - auto stub?
+
+  curl -H "Content-Type: application/json -X POST --data 'xxx'  url | jq
 
   - https://hexdocs.pm/curl_req/readme.html
   """

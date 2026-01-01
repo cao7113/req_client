@@ -30,25 +30,7 @@ defmodule ReqClient.Httpc do
   def direct(url), do: url |> ReqClient.BaseUtils.get_url() |> :httpc.request()
 
   @doc """
-  Performs HTTP Request and returns Response
-
-    * method - The http method, for example :get, :post, :put, etc
-    * url - The string url, for example "http://example.com"
-    * headers - The map of headers
-    * body - The optional string body. If the body is a map, it is converted
-      to a URI encoded string of parameters
-
-  ## Examples
-
-      iex> ReqClient.Httpc.req(:get, "http://127.0.0.1", %{})
-      {:ok, %Response{..})
-
-      iex> ReqClient.Httpc.req(:post, "http://127.0.0.1", %{}, param1: "val1")
-      {:ok, %Response{..})
-
-      iex> ReqClient.Httpc.req(:get, "http://unknownhost", %{}, param1: "val1")
-      {:error, ...}
-
+  Send a request
   """
   def req(method, url, headers, body \\ "", opts \\ [])
 
@@ -58,10 +40,11 @@ defmodule ReqClient.Httpc do
 
   def req(method, url, headers, body, opts) when is_map(headers) do
     unless opts[:no_check_deps], do: ensure_started!()
+    debug? = Keyword.get(opts, :debug, false)
 
     url = ReqClient.BaseUtils.get_url(url)
     url_cl = String.to_charlist(url)
-    {req_headers, ct_type} = get_req_headers(headers)
+    {req_headers, ct_type} = get_req_headers(headers, debug?)
     set_proxy(opts)
 
     # https://www.erlang.org/doc/apps/inets/httpc.html#request/5
@@ -117,7 +100,6 @@ defmodule ReqClient.Httpc do
           Logger.debug("use proxy opts: #{proxy_opts |> inspect}")
         end
 
-        # todo use standalone proxy profile
         :httpc.set_options(proxy_opts)
 
       reason ->
@@ -129,12 +111,14 @@ defmodule ReqClient.Httpc do
     end
   end
 
-  def get_req_headers(headers) when is_map(headers) do
+  def get_req_headers(headers, debug? \\ false) when is_map(headers) do
     headers =
       if Map.has_key?(headers, "accept-encoding") do
-        Logger.warning(
-          "not support accept-encoding: #{headers["accept-encoding"]}, already delete it!"
-        )
+        if debug? do
+          Logger.warning(
+            "not support accept-encoding: #{headers["accept-encoding"]}, already delete it!"
+          )
+        end
 
         headers |> Map.delete("accept-encoding")
       else

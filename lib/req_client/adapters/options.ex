@@ -6,9 +6,12 @@ defmodule ReqClient.Adapter.Options do
 
   return request options for debug
   """
+  use ReqClient.Adapter
 
-  require Logger
+  @impl true
+  def stub?(), do: true
 
+  @impl true
   def run(req, _payload) do
     req = req |> ReqClient.Adapter.Req.maybe_proxy_req()
 

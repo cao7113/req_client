@@ -35,6 +35,7 @@ defmodule ReqClient.Plugin.Wrapper do
   def pre_wrap(req) do
     {kind, payload} =
       if ReqClient.has_option?(req, @stub_option) do
+        # special stub: stub_data support as sugar syntax
         {:stub, Req.Request.get_option(req, @stub_option)}
       else
         kind = ReqClient.find_option(req, @options) || @default_kind
@@ -44,11 +45,15 @@ defmodule ReqClient.Plugin.Wrapper do
       end
 
     # catch current used adapter-kind, only register here!
+    adapter_mod = adapter_module_of(kind)
     req = Req.Request.put_private(req, :wrapper, kind)
+    req = Req.Request.put_private(req, :wrapper_adapter_module, adapter_module_of(kind))
     req = Req.Request.put_private(req, :wrapper_payload, payload)
 
     if verbose?(req) do
-      Logger.debug("wrap #{kind} adapter with payload: #{payload |> inspect}")
+      Logger.debug(
+        "wrap #{kind} adapter module: #{adapter_mod |> inspect()} with payload: #{payload |> inspect}"
+      )
     end
 
     if kind not in @kinds do
@@ -73,19 +78,9 @@ defmodule ReqClient.Plugin.Wrapper do
   - register at ReqClient.new
   """
   def run_adapt(req) do
-    kind = Req.Request.get_private(req, :wrapper)
+    adapter_mod = Req.Request.get_private(req, :wrapper_adapter_module)
     payload = Req.Request.get_private(req, :wrapper_payload)
-    # todo put here login in pre_wrap???
-    adapter_mod = adapter_module_of(kind)
-
-    if ReqClient.verbose?(req) do
-      Logger.debug(
-        "use adapter module: #{adapter_mod |> inspect()} with payload: #{payload |> inspect()}"
-      )
-    end
-
-    # todo use a behavior for adapter modules?
-    apply(adapter_mod, :run, [req, payload])
+    adapter_mod.run(req, payload)
   end
 
   def adapter_module_of(kind) when is_atom(kind) do

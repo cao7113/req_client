@@ -9,8 +9,10 @@ defmodule ReqClient.Adapter.Httpc do
   """
 
   alias ReqClient.Httpc
+  use ReqClient.Adapter
   require Logger
 
+  @impl true
   def run(%{method: method, url: url, body: body} = req, _payload) do
     url = URI.to_string(url)
     req_headers = get_req_headers(req)
@@ -21,7 +23,7 @@ defmodule ReqClient.Adapter.Httpc do
   end
 
   def get_req_opts(%{options: opts} = _req) do
-    # todo: normalize verbose to debug
+    # todo: normalize or unify verbose to debug
     opts |> Enum.to_list()
   end
 

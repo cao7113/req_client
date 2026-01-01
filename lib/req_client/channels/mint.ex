@@ -241,9 +241,8 @@ defmodule ReqClient.Mint do
   def request_path(%{path: path, query: ""}), do: path
   def request_path(%{path: path, query: query}), do: "#{path}?#{query}"
 
-  def get_protocol(%{conn: conn}) when not is_nil(conn) do
+  def get_protocol(conn) when not is_nil(conn) do
     # h2? = is_struct(conn, Mint.HTTP2)
-    # IO.puts("#http2: #{h2?}")
     Mint.HTTP.protocol(conn)
   end
 
@@ -493,7 +492,6 @@ defmodule ReqClient.MintAgent do
         {:noreply, state}
 
       {:error, conn, reason, [responses]} ->
-        # todo
         Logger.error("#{reason |> inspect}")
         state = put_in(state.conn, conn)
 
