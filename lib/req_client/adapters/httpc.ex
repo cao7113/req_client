@@ -8,23 +8,36 @@ defmodule ReqClient.Adapter.Httpc do
   eg. Rc.get! "https://slink.fly.dev/api/ping", debug: true, wrap: :hc #, proxy: false
   """
 
-  alias ReqClient.Httpc
+  alias ReqClient.Channel.Httpc
   use ReqClient.Adapter
   require Logger
 
   @impl true
-  def run(%{method: method, url: url, body: body} = req, _payload) do
-    url = URI.to_string(url)
-    req_headers = get_req_headers(req)
+  def run(%{url: uri} = req, _payload) do
     req_opts = get_req_opts(req)
-    {:ok, resp} = Httpc.req(method, url, req_headers, body, req_opts)
-    resp = resp |> Req.Response.new()
-    {req, resp}
+
+    with {:ok, resp} <- Httpc.req(uri, req_opts) do
+      {channel_data, resp} = Map.pop(resp, :channel_metadata)
+
+      resp =
+        resp
+        |> Req.Response.new()
+        |> Req.Response.put_private(:channel, channel_data)
+
+      {req, resp}
+    else
+      {:error, exp} -> {req, exp}
+    end
   end
 
-  def get_req_opts(%{options: opts} = _req) do
-    # todo: normalize or unify verbose to debug
-    opts |> Enum.to_list()
+  def get_req_opts(%{method: method, options: opts, body: body} = req) do
+    opts
+    |> Enum.to_list()
+    |> Keyword.merge(
+      method: method,
+      headers: get_req_headers(req),
+      body: body
+    )
   end
 
   def get_req_headers(req) do

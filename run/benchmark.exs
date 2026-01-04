@@ -53,11 +53,11 @@ IO.puts("## adapters: #{adapters |> inspect}")
 
 result =
   adapters
-  |> Enum.map(fn a ->
+  |> Enum.map(fn k ->
     Task.async(fn ->
-      resp = Rc.get!(url, timing: true, redirect: false, wrap: a)
+      resp = Rc.get!(url, timing: true, redirect: false, wrap: k)
       rtt = ReqClient.Plugin.Timing.get_timing_rtt(resp)
-      {a, rtt}
+      {k, rtt}
     end)
   end)
   |> Task.await_many(10_000)
@@ -72,3 +72,14 @@ result =
   |> Enum.sort_by(fn {_k, v} -> v end)
 
 {repeat_times, result} |> dbg
+
+# [
+#   ReqClient.Channel.Httpc,
+#   ReqClient.Channel.Mint
+# ]
+# |> Enum.map(fn k ->
+#   Task.async(fn ->
+#     k.get(url, timing: true)
+#   end)
+# end)
+# |> Task.await_many(10_000)

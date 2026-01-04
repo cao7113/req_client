@@ -1,6 +1,6 @@
 defmodule ReqClient.Adapter do
   @moduledoc """
-  Wrappable adapter behaviours
+  Wrappable adapter behaviour
   """
 
   @callback run(Req.Request.t(), term()) :: {Req.Request.t(), Req.Response.t() | Exception.t()}

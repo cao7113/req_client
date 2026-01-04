@@ -27,16 +27,18 @@ defmodule ReqClient.Adapter.Req do
 
   @impl true
   def run(req, _payload) do
+    Application.ensure_all_started(:req)
+
     req
     |> maybe_proxy_req()
-    # |> Req.Steps.run_finch()
+    # or |> Req.Steps.run_finch()
     |> Req.Finch.run()
   end
 
   def maybe_proxy_req(%{url: uri, options: options} = req) do
     opts = options |> Enum.to_list()
 
-    ReqClient.Mint.maybe_proxy_opts(uri, opts)
+    ReqClient.Channel.Mint.maybe_proxy_opts(uri, opts)
     |> case do
       [] ->
         req

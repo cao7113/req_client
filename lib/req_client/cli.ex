@@ -49,7 +49,7 @@ defmodule ReqClient.CLI do
       exit(:shutdown)
     end
 
-    urls = ReqClient.BaseUtils.shortcut_urls()
+    urls = ReqClient.Channel.shortcut_urls()
     shorts = urls |> Keyword.keys() |> Enum.map(&to_string/1)
 
     url =

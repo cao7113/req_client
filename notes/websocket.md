@@ -1,5 +1,7 @@
 # WebSocket
 
+- https://hex.pm/packages/req_web_socket
+
 ## Links
 
 - https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API

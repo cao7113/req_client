@@ -1,4 +1,4 @@
-defmodule ReqClient.MintWs.Util do
+defmodule ReqClient.Channel.MintWs.Util do
   @moduledoc """
   Ws utils
   """

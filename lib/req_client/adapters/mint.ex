@@ -20,7 +20,7 @@ defmodule ReqClient.Adapter.Mint do
         %{url: uri, method: method, headers: headers, body: body, options: options} = req,
         _payload
       ) do
-    headers =
+    req_headers =
       headers
       |> Enum.to_list()
       |> Enum.map(fn {k, v} ->
@@ -29,16 +29,15 @@ defmodule ReqClient.Adapter.Mint do
 
     req_opts =
       Enum.to_list(options)
-      |> Keyword.merge(method: method, headers: headers, body: body)
+      |> Keyword.merge(method: method, headers: req_headers, body: body)
 
-    with {:ok, resp} <- ReqClient.Mint.req(uri, req_opts) do
-      data = resp[:data]
+    with {:ok, resp} <- ReqClient.Channel.Mint.req(uri, req_opts) do
+      {channel_data, resp} = Map.pop(resp, :channel_metadata)
 
       resp =
         resp
-        |> Map.drop([:data])
-        |> Map.put(:body, data)
         |> Req.Response.new()
+        |> Req.Response.put_private(:channel, channel_data)
 
       {req, resp}
     else

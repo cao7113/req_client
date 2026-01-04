@@ -34,6 +34,13 @@ tasks:
     # [req: 1629, mint: 1644, httpc: 1647]
     time curl $url
 
+  ## output httpc or mint req-client code
+  out.hc: |
+    outdir=notes
+    mkdir -p $outdir
+    cat lib/req_client/channels/channel.ex lib/req_client/channels/httpc.ex > $outdir/httpc.ex
+    echo "# Output httpc-standalone code into $outdir/httpc.ex"
+
   ## Git ops
   ops.up: mix git_ops.release --yes && git push --follow-tags
   prj.info: mix git_ops.project_info

@@ -69,7 +69,7 @@ defmodule ReqClient do
   Build a new Req client request with custom plugins
   """
   def new(opts \\ []) do
-    opts = Keyword.replace_lazy(opts, :url, &ReqClient.BaseUtils.get_url/1)
+    opts = Keyword.replace_lazy(opts, :url, &ReqClient.Channel.get_url/1)
 
     r =
       default_opts()

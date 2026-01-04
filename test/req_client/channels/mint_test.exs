@@ -1,10 +1,10 @@
-defmodule ReqClient.MintTest do
+defmodule ReqClient.Channel.MintTest do
   use ExUnit.Case
-  alias ReqClient.Mint
+  alias ReqClient.Channel.Mint
 
   @moduletag :external
 
   test "get" do
-    assert {:ok, %{status: 200}} = Mint.get("https://x.com", debug: true)
+    assert {:ok, %{status: 200}} = Mint.get("https://x.com", debug: false)
   end
 end
