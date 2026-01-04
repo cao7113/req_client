@@ -37,7 +37,7 @@ by adding `req_client` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:req_client, "~> 0.1.11"}
+    {:req_client, "~> 0.1.12"}
   ]
 end
 ```

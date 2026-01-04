@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.1.12](https://github.com/cao7113/req_client/compare/v0.1.11...v0.1.12) (2026-01-04)
+
+
+
+
+### Improvements:
+
+* use ReqClient.Channel behaviour to unify httpc and mint implementation by Ryn Cao
+
 ## [v0.1.11](https://github.com/cao7113/req_client/compare/v0.1.10...v0.1.11) (2026-01-01)
 
 
