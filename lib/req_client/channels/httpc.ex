@@ -84,7 +84,8 @@ defmodule ReqClient.Channel.Httpc do
         headers
       end
       |> Map.put_new("user-agent", "erlang/httpc")
-      |> Map.put_new("content-type", "text/html")
+      # |> Map.put_new("content-type", "text/html")
+      |> Map.put_new("content-type", "application/json; charset=utf-8")
 
     ct_type = headers["content-type"] |> String.to_charlist()
 

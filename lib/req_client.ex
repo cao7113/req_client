@@ -61,6 +61,7 @@ defmodule ReqClient do
     ReqClient.Plugin.Breaker,
     ReqClient.Plugin.TraceId,
     ReqClient.Plugin.Inspect,
+    ReqClient.Plugin.Cacher,
     # should be the last one
     ReqClient.Plugin.Wrapper
   ]
@@ -137,4 +138,38 @@ defmodule ReqClient do
   end
 
   def list_options(r \\ new()), do: get_option_list(r)
+
+  def default_req_opts do
+    Req.default_options()
+  end
+
+  @doc """
+  Get cache dir if unspecified in options with :cache_dir key
+
+  iex> url = "https://elixir-lang.org"
+  iex> Req.get!(url, cache: true)
+
+  $> ls -al ~/Library/Caches/req
+  """
+  def get_cache_dir(request \\ new()),
+    do: request.options[:cache_dir] || :filename.basedir(:user_cache, ~c"req") |> to_string()
+
+  ## finch
+
+  def finch_children(sup \\ Req.FinchSupervisor) do
+    # {DynamicSupervisor, strategy: :one_for_one, name: Req.FinchSupervisor},
+    # dynamic create pool when provided :connect_options: []
+    DynamicSupervisor.which_children(sup)
+  end
+
+  @doc """
+  protocols: [:http1]]
+
+  Req.Finch default pool not support proxy!!!
+  """
+  def default_finch_opts do
+    # Req default start Finch pool
+    # {Finch, name: Req.Finch, pools: %{default: Req.Finch.pool_options(%{})}}
+    Req.Finch.pool_options(%{})
+  end
 end

@@ -9,14 +9,14 @@ defmodule ReqClient.Plugin.Proxy do
   - :no|false      do-not use proxy
   - opts with      values like [http_proxy: [], https_proxy: [], no_proxy: []]
   """
-
+  alias Req.{Request}
   require Logger
 
   @options [:proxy]
 
   def attach(req, opts \\ []) do
     req
-    |> Req.Request.register_options(@options)
+    |> Request.register_options(@options)
     |> Req.merge(opts)
   end
 end
