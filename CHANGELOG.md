@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.1.13](https://github.com/cao7113/req_client/compare/v0.1.12...v0.1.13) (2026-01-07)
+
+
+
+
+### Improvements:
+
+* add cacher plugin by Ryn Cao
+
 ## [v0.1.12](https://github.com/cao7113/req_client/compare/v0.1.11...v0.1.12) (2026-01-04)
 
 
