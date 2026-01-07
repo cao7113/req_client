@@ -34,6 +34,9 @@ tasks:
     # [req: 1629, mint: 1644, httpc: 1647]
     time curl $url
 
+  cacher.files: |
+    ls -l ~/Library/Caches/req_client
+    
   ## output httpc or mint req-client code
   out.hc: |
     outdir=notes

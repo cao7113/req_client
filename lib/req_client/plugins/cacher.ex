@@ -35,26 +35,32 @@ defmodule ReqClient.Plugin.Cacher do
     if enable?(req) do
       dir = get_cacher_dir(req.options[@cacher_dir_key])
       cache_path = cache_path(dir, req)
-      fresh_days = req.options[:cacher_fresh_days]
 
-      case cache_file_info(cache_path, fresh_days) do
-        {:ignore, _} ->
-          req
+      if File.exists?(cache_path) do
+        fresh_days = req.options[:cacher_fresh_days]
+        fresh_after_at = fresh_after_at(fresh_days)
 
-        {:ok, mtime} ->
+        cached_resp = restore_cache(cache_path)
+        cached_at = Response.get_private(cached_resp, :cacher_cached_at, DateTime.utc_now())
+
+        if DateTime.after?(cached_at, fresh_after_at) do
           if ReqClient.verbose?(req) do
             Logger.info("Using cached response from #{cache_path}")
           end
 
           resp =
-            restore_cache(cache_path)
+            cached_resp
             |> Response.put_private(:cacher_path, cache_path)
-            |> Response.put_private(:cacher_cached_at, mtime)
+            |> Response.put_private(:cacher_fresh, true)
 
-          Request.halt(req, resp)
-
-        {:error, _} ->
+          # Request.halt(req, resp)
+          # keep afterwards resp-steps
+          {req, resp}
+        else
           req
+        end
+      else
+        req
       end
     else
       req
@@ -64,12 +70,20 @@ defmodule ReqClient.Plugin.Cacher do
   def update_cacher({req, resp}) do
     if enable?(req) do
       if resp.status == 200 do
-        dir = get_cacher_dir(req.options[@cacher_dir_key])
-        cache_path = cache_path(dir, req)
-        write_cache(cache_path, resp)
+        fresh? = Response.get_private(resp, :cacher_fresh, false)
 
-        if ReqClient.verbose?(req) do
-          Logger.info("Wrote cached response to #{cache_path}")
+        if fresh? do
+          # already fresh from cache, do nothing
+          :ok
+        else
+          dir = get_cacher_dir(req.options[@cacher_dir_key])
+          cache_path = cache_path(dir, req)
+          cached_resp = Response.put_private(resp, :cacher_cached_at, DateTime.utc_now())
+          write_cache(cache_path, cached_resp)
+
+          if ReqClient.verbose?(req) do
+            Logger.info("Wrote cached response to #{cache_path}")
+          end
         end
       end
     end
@@ -93,35 +107,9 @@ defmodule ReqClient.Plugin.Cacher do
     :erlang.binary_to_term(cached_response)
   end
 
-  def cache_file_info(cache_path, fresh_days \\ nil) do
-    if File.exists?(cache_path) do
-      case File.stat(cache_path) do
-        {:ok, stat} ->
-          time =
-            stat.mtime
-            |> NaiveDateTime.from_erl!()
-            |> DateTime.from_naive!("Etc/UTC")
-
-          valid_after_at = valid_after_at(fresh_days)
-
-          if DateTime.compare(time, valid_after_at) == :gt do
-            {:ok, time}
-          else
-            {:error, :expired}
-          end
-
-        {:error, reason} ->
-          {:error, reason}
-      end
-    else
-      {:ignore, :not_found}
-    end
-  end
-
-  def valid_after_at(days \\ nil) do
+  def fresh_after_at(days \\ nil) do
     days = days || @max_fresh_days
-    max_old_seconds = days * 60 * 60 * 24
-    DateTime.add(DateTime.utc_now(), -max_old_seconds, :second)
+    DateTime.add(DateTime.utc_now(), -days, :day)
   end
 
   def get_cacher_dir(cacher_dir \\ nil) do
@@ -141,5 +129,20 @@ defmodule ReqClient.Plugin.Cacher do
       )
 
     Path.join(cache_dir, cache_key)
+  end
+
+  def get_filet_time(path) do
+    case File.stat(path) do
+      {:ok, stat} ->
+        time =
+          stat.mtime
+          |> NaiveDateTime.from_erl!()
+          |> DateTime.from_naive!("Etc/UTC")
+
+        {:ok, time}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 end

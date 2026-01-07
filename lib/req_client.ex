@@ -172,4 +172,8 @@ defmodule ReqClient do
     # {Finch, name: Req.Finch, pools: %{default: Req.Finch.pool_options(%{})}}
     Req.Finch.pool_options(%{})
   end
+
+  def resp_private(%{private: priv} = _resp) do
+    priv
+  end
 end
