@@ -1,39 +1,22 @@
 defmodule ReqClient do
   @moduledoc """
-  Request Client based on Req & Finch & Mint!
+  Request client based on Req & Finch & Mint!
 
-  No client-level process now, all use Req, just a smiple wraper!
+  No client-level process, all use Req, just a simple wrapper!
+
+  ## Examples
 
   iex> ReqClient.get!("https://slink.fly.dev/api/ping")
   iex> ReqClient.get!("https://api.github.com/repos/elixir-lang/elixir")
   """
-
-  @doc """
-  Quick get request
-
-  ## Example
-    iex> R.g
-    iex> R.g :l
-    iex> R.g verbose: true
-  """
-  def g(url \\ :default, opts \\ []) do
-    {url, opts} =
-      if is_list(url) do
-        {nil, url}
-      else
-        {url, opts}
-      end
-
-    url = url || opts[:url] || :default
-    get!(url, opts)
-  end
 
   [:get, :post, :delete, :head, :patch, :run]
   |> Enum.each(fn req_method ->
     @doc """
     #{req_method |> to_string |> String.capitalize()} request
 
-    ## Example
+    ## Examples
+
       iex> ReqClient.#{req_method} "https://httpbin.org/#{req_method}"
     """
     def unquote(req_method)(url, opts \\ []) do
@@ -45,7 +28,9 @@ defmodule ReqClient do
 
     @doc """
     #{req_method |> to_string |> String.capitalize()} request with direct response
-    ## Example
+
+    ## Examples
+
       iex> ReqClient.#{req_method_with_bang} "https://httpbin.org/#{req_method}"
     """
     def unquote(req_method_with_bang)(url, opts \\ []) do
@@ -54,7 +39,6 @@ defmodule ReqClient do
     end
   end)
 
-  # NOTE: prepend in reversed order
   @plugins [
     ReqClient.Plugin.Timing,
     ReqClient.Plugin.Proxy,
@@ -173,7 +157,6 @@ defmodule ReqClient do
     Req.Finch.pool_options(%{})
   end
 
-  def resp_private(%{private: priv} = _resp) do
-    priv
-  end
+  def get_private(%{private: priv} = _req_or_resp), do: priv
+  def get_private(_), do: %{}
 end

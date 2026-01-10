@@ -19,6 +19,8 @@ alias ReqClient.Channel.Httpc, as: Hc
 
 import_file_if_available(".iex.local.exs")
 
+import ReqClient.Iex
+
 ## Helpers
 
 # Load another ".iex.exs" file

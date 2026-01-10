@@ -35,8 +35,9 @@ tasks:
     time curl $url
 
   cacher.files: |
+    # req_client https://hub.docker.com/v2/namespaces/hexpm/repositories/elixir/tags\?name\=1.19.4-erlang-28.1.1-debian-trixie- --cacher -d
     ls -l ~/Library/Caches/req_client
-    
+
   ## output httpc or mint req-client code
   out.hc: |
     outdir=notes

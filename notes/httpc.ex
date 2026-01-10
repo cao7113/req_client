@@ -250,9 +250,6 @@ defmodule ReqClient.Channel.Httpc do
   @moduledoc """
   Simple http/1 Client by wrapping :httpc (erlang builtin HTTP/1.1 client)
 
-  NOTE: please keep this file standalone, so it can be used in archives like ehelper!!!
-  - DONOT depends on non-elixir builtin modules
-
   ## Example
 
   eg. Hc.get "https://slink.fly.dev/api/ping"
@@ -335,7 +332,8 @@ defmodule ReqClient.Channel.Httpc do
         headers
       end
       |> Map.put_new("user-agent", "erlang/httpc")
-      |> Map.put_new("content-type", "text/html")
+      # |> Map.put_new("content-type", "text/html")
+      |> Map.put_new("content-type", "application/json; charset=utf-8")
 
     ct_type = headers["content-type"] |> String.to_charlist()
 

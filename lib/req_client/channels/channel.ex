@@ -51,7 +51,6 @@ defmodule ReqClient.Channel do
       -
       - other channel-specific options
 
-
       ## About response
       - is map todo typespec
       - body: should be binary

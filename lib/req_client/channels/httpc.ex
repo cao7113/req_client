@@ -165,10 +165,12 @@ defmodule ReqClient.Channel.Httpc do
 
   - https://www.erlang.org/doc/apps/inets/httpc.html#set_options/1
 
+    ```
     {:proxy, {Proxy :: {HostName, Port}, NoProxy :: [DomainDesc | HostName | IpAddressDesc],}}
     HostName - Example: "localhost" or "foo.bar.se"
     DomainDesc - Example "*.Domain" or "*.ericsson.se"
     IpAddressDesc - Example: "134.138" or "[FEDC:BA98" (all IP addresses starting with 134.138 or FEDC:BA98), "66.35.250.150" or "[2010:836B:4179::836B:4179]" (a complete IP address). proxy defaults to {undefined, []}, that is, no proxy is configured and https_proxy defaults to the value of proxy.
+    ```
   """
   def set_proxy(opts \\ [], debug? \\ false) do
     case opts[:proxy] do

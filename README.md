@@ -29,6 +29,10 @@ iex> ReqClient.get!("https://httpbin.org/get", debug: true, wrap: :options)
 ...
 ```
 
+## Plugins
+
+- Proxy by `proxy: true` respect curl-like `HTTP_PROXY, HTTPS_PROXY, NO_PROXY` environment variables.
+
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
@@ -45,4 +49,8 @@ end
 ## Links
 
 - https://github.com/wojtekmach/req
-- similar https://github.com/michaelbearne/req_client_base
+
+### Similar projects
+
+- https://github.com/michaelbearne/req_client_base
+- https://github.com/GRoguelon/any_http

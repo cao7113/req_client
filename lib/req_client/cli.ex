@@ -93,7 +93,7 @@ defmodule ReqClient.CLI do
     duration = ReqClient.Plugin.Timing.get_duration(begin_at, :millisecond)
 
     IO.puts(
-      "# Timing info: total: #{duration}, req: #{req_timing} apps-starting: #{apps_timing} ms"
+      "# Timing (ms) info: total: #{duration}, req: #{req_timing} apps-starting: #{apps_timing}"
     )
   end
 end
