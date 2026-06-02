@@ -27,11 +27,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
+      # 它会自动读取 mise.toml 并安装对应的 Elixir / Erlang 版本
+      - name: Setup Elixir via mise
+        uses: jdx/mise-action@v2
         with:
-          version-file: .tool-versions
-          version-type: strict
+          # 开启 mise 自带的工具缓存（加速后续构建）
+          cache: true 
 
       - name: Restore dependencies cache
         uses: actions/cache@v4

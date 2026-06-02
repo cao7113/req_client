@@ -51,4 +51,6 @@ tasks:
   ops.init: mix git_ops.release --initial
 
   setup: |
+    mise install
     mix deps.get
+    # mix test

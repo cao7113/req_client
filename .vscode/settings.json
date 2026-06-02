@@ -1,0 +1,5 @@
+{
+  // 强制当前窗口/工作区使用 nix profile
+  "workbench.profiles.actions.profileToUse": "elixir",
+  "editor.tabSize": 2,
+}
