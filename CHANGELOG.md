@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.1.15](https://github.com/cao7113/req_client/compare/v0.1.14...v0.1.15) (2026-06-02)
+
+
+
+
+### Bug Fixes:
+
+* mix.exs prod deps linking and use mise instead of asdf by [@cao7113](https://github.com/cao7113)
+
 
 ## [v0.1.14](https://github.com/cao7113/req_client/compare/v0.1.13...v0.1.14) (2026-01-07)
 
