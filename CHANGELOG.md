@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.1.16](https://github.com/cao7113/req_client/compare/v0.1.15...v0.1.16) (2026-10-15)
+
+
+
+
+### Bug Fixes:
+
+* deprecate pool_timeout warning and upgrade versions by [@cao7113](https://github.com/cao7113)
+
 ## [v0.1.15](https://github.com/cao7113/req_client/compare/v0.1.14...v0.1.15) (2026-06-02)
 
 
