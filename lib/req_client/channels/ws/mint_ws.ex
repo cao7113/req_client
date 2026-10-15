@@ -107,8 +107,8 @@ defmodule ReqClinet.MintWs do
   def client(opts \\ []) do
     with {:ok, socket} <- connect(opts) do
       socket
-    else
-      other -> raise "connect failed: #{other |> inspect}"
+      # else
+      #   other -> raise "connect failed: #{other |> inspect}"
     end
   end
 

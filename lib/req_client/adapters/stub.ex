@@ -8,11 +8,13 @@ defmodule ReqClient.Adapter.Stub do
 
   Fake adapter:
 
-    iex> fake = fn request ->
-    ...>   {request, Req.Response.new(status: 200, body: "it works!")}
+    iex> defmodule MyApp.Fake do
+    ...>   use ReqClient.Adapter.Stub, adapter: fake
+    ...>   def run(request)
+    ...>     {request, Req.Response.new(status: 200, body: "it works!")}
+    ...>   end
     ...> end
-    iex>
-    iex> req = Req.new(adapter: fake)
+    iex> req = Req.new(adapter: MyApp.Fake)
     iex> Req.get!(req).body
     "it works!"
   """

@@ -10,7 +10,7 @@ defmodule ReqClient.Plugin.Proxy do
   - opts with      values like [http_proxy: [], https_proxy: [], no_proxy: []]
   """
   alias Req.{Request}
-  require Logger
+  # require Logger
 
   @options [:proxy]
 

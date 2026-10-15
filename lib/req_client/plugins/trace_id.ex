@@ -3,7 +3,7 @@ defmodule ReqClient.Plugin.TraceId do
   Req trace-id plugin
   """
 
-  require Logger
+  # require Logger
 
   def attach(req, opts \\ []) do
     req

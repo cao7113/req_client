@@ -26,20 +26,23 @@ defmodule ReqClient.Adapter.StubTest do
     # run_finch is the default adapter to do the actual network request!
     # https://hexdocs.pm/req/Req.Request.html#module-adapter
     test "use adapter" do
-      adapter = fn req ->
-        resp = %Req.Response{status: 200, body: "it works!"}
-        {req, resp}
+      defmodule AdapterWorks do
+        def run(req) do
+          resp = %Req.Response{status: 200, body: "it works!"}
+          {req, resp}
+        end
       end
 
-      assert "it works!" == Rc.get!("http://test", adapter: adapter).body
+      assert "it works!" == Rc.get!("http://test", adapter: AdapterWorks).body
 
-      # json resp
-      adapter = fn req ->
-        resp = Req.Response.json(%{hello: 42})
-        {req, resp}
+      defmodule AdapterJson do
+        def run(req) do
+          resp = Req.Response.json(%{hello: 42})
+          {req, resp}
+        end
       end
 
-      resp = Rc.get!("http://test", adapter: adapter)
+      resp = Rc.get!("http://test", adapter: AdapterJson)
       assert %{"content-type" => ["application/json"]} = resp.headers
       assert resp.body == %{"hello" => 42}
       # ~s|{"hello":42}|

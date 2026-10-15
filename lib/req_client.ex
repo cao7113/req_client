@@ -76,7 +76,7 @@ defmodule ReqClient do
       # default is 10
       max_redirects: 5,
       # timeout in milliseconds
-      pool_timeout: 5_000,
+      # finch: [pool_timeout: 5_000],
       receive_timeout: 15_000,
       connect_options: [
         # timeout defaults to 30_000
