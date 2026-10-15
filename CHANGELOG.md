@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.1.17](https://github.com/cao7113/req_client/compare/v0.1.16...v0.1.17) (2026-10-15)
+
+
+
+
+### Bug Fixes:
+
+* warning adapter is function by [@cao7113](https://github.com/cao7113)
+
 ## [v0.1.16](https://github.com/cao7113/req_client/compare/v0.1.15...v0.1.16) (2026-10-15)
 
 
