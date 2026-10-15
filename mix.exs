@@ -39,7 +39,7 @@ defmodule ReqClient.MixProject do
       {:mint, "~> 1.7"},
       {:mint_web_socket, "~> 1.0"},
       {:finch, "~> 0.20"},
-      {:req, "~> 0.5"},
+      {:req, "~> 0.7"},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
   end

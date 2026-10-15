@@ -58,7 +58,7 @@ defmodule ReqClient do
 
     r =
       default_opts()
-      |> Keyword.put(:adapter, &ReqClient.Plugin.Wrapper.run_adapt/1)
+      |> Keyword.put(:adapter, ReqClient.Plugin.Wrapper)
       |> Req.new()
 
     @plugins

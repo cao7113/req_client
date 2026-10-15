@@ -77,7 +77,7 @@ defmodule ReqClient.Plugin.Wrapper do
   - adapter step run after all request-steps
   - register at ReqClient.new
   """
-  def run_adapt(req) do
+  def run(req) do
     adapter_mod = Req.Request.get_private(req, :wrapper_adapter_module)
     payload = Req.Request.get_private(req, :wrapper_payload)
     adapter_mod.run(req, payload)
